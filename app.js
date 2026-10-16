@@ -11,6 +11,7 @@
     { key: 'Network', he: 'רשת', en: 'Network', icon: '📡', color: '#34d399' },
     { key: 'Printers', he: 'מדפסות', en: 'Printers', icon: '🖨️', color: '#fb923c' },
     { key: 'System', he: 'מערכת', en: 'System', icon: '⚙️', color: '#f472b6' },
+    { key: 'Build', he: 'בניית דומיין', en: 'Build a domain (lab)', icon: '🏗️', color: '#a3e635' },
     { key: 'Win+R', he: 'קיצורי Win+R', en: 'Run commands', icon: '⌨️', color: '#94a3b8' }
   ];
   var CAT_BY_KEY = {};
@@ -720,7 +721,15 @@
       .then(function (entries) {
         if (!state.kv.seeded) {
           var seeds = (window.SEED_ENTRIES || []).map(function (s) { return normalizeEntry(s).entry; }).filter(Boolean);
-          return dbPutMany(seeds).then(function () { return kvSet('seeded', Date.now()); }).then(function () { return seeds; });
+          return dbPutMany(seeds).then(function () { return kvSet('seeded', Date.now()); }).then(function () { return kvSet('buildSeeded', 1); }).then(function () { return seeds; });
+        }
+        if (!state.kv.buildSeeded) {
+          // one-time top-up for installs created before the "Build a domain" chapter existed
+          var have = {};
+          entries.forEach(function (e) { have[e.id] = true; });
+          var add = (window.SEED_ENTRIES || []).filter(function (s) { return s.category === 'Build' && !have[s.id]; })
+            .map(function (s) { return normalizeEntry(s).entry; }).filter(Boolean);
+          return dbPutMany(add).then(function () { return kvSet('buildSeeded', 1); }).then(function () { return entries.concat(add); });
         }
         return entries;
       })

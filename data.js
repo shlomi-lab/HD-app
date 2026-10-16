@@ -3317,5 +3317,1251 @@ window.SEED_ENTRIES = [
   ],
   "createdAt": 1760600000000,
   "updatedAt": 1760600000000
+ },
+ {
+  "id": "build-00",
+  "titleHe": "00 · מפת המעבדה וסדר ההקמה",
+  "titleEn": "Lab map and build order",
+  "category": "Build",
+  "symptom": "סקירה של 6 השרתים, כתובות, ותפקידים, והסדר הנכון להקים אותם. דומיין lab.local (NetBIOS: LAB).",
+  "commands": [
+   {
+    "label": "מצב כללי אחרי כל שלב",
+    "text": "dcdiag /q; repadmin /replsummary"
+   },
+   {
+    "label": "מי מחזיק תפקידי FSMO",
+    "text": "netdom query fsmo"
+   }
+  ],
+  "guiSteps": [
+   "01 הכנת שרתים (שם, IP, DNS, פרופיל רשת) ← 02 קידום DC1 ← 03 הצטרפות שרתים לדומיין.",
+   "04 OU, משתמשים וקבוצות ← 05 GPO ← 06 RDS על TS1.",
+   "07 SQL Server ← 08 הרשאות מינימליות ← 09 PKI (AD CS) ← 10 TLS ← 11 TDE והצפנות.",
+   "12 DC2 (לפני Exchange, ותמיד שניהם דולקים) ← 13-15 VPN (IKEv2).",
+   "16-19 Exchange Server SE: הכנות, PrepareSchema/AD/Domain, התקנת Mailbox, הגדרות.",
+   "הקשחה (Security Baseline) ובדיקת חדירה: דוחות נפרדים, אחרי שהבנייה יציבה."
+  ],
+  "ifNotWorking": "",
+  "notes": "DC1 192.168.75.171 (DC, DNS, CA) · TS1 192.168.75.172 (RDS) · SQL1 192.168.75.173 · DC2 192.168.75.174 (DC שני, GC) · MAIL1 192.168.75.180 (Exchange) · VPN1 Internal 192.168.75.166 / External 192.168.2.60 · Gateway 192.168.75.2. דומיין המייל corp.example.com ושם ה-VPN myvpn.duckdns.org הם placeholders. מקור: דוח מעבדת Windows Server 2025 (שיעור סקירה וארכיטקטורה). ",
+  "tags": [
+   "מעבדה",
+   "lab",
+   "בניית דומיין",
+   "build",
+   "overview",
+   "סדר",
+   "ארכיטקטורה"
+  ],
+  "createdAt": 1760600000000,
+  "updatedAt": 1760600000000
+ },
+ {
+  "id": "build-01",
+  "titleHe": "01 · הכנת שרת: שם, IP סטטי, DNS ופרופיל רשת",
+  "titleEn": "Prep server: name, static IP, DNS, network profile",
+  "category": "Build",
+  "symptom": "לפני כל קידום או הצטרפות: שם נכון, כתובת קבועה, DNS שמצביע ל-DC, ופרופיל רשת Private כדי ש-ping יעבוד.",
+  "commands": [
+   {
+    "label": "שינוי שם והפעלה מחדש",
+    "text": "Rename-Computer -NewName DC1 -Restart"
+   },
+   {
+    "label": "כתובת סטטית (תבנית)",
+    "text": "New-NetIPAddress -InterfaceAlias \"Ethernet0\" -IPAddress 192.168.75.171 -PrefixLength 24 -DefaultGateway 192.168.75.2"
+   },
+   {
+    "label": "DNS (ב-DC1 מצביע לעצמו, בשאר ל-DC1)",
+    "text": "Set-DnsClientServerAddress -InterfaceAlias \"Ethernet0\" -ServerAddresses 192.168.75.171"
+   },
+   {
+    "label": "פרופיל רשת Private",
+    "text": "Set-NetConnectionProfile -InterfaceAlias \"Ethernet0\" -NetworkCategory Private"
+   },
+   {
+    "label": "אישור ping נכנס",
+    "text": "Enable-NetFirewallRule -DisplayName \"*Echo Request*\""
+   },
+   {
+    "label": "בדיקת הפרופיל",
+    "text": "Get-NetConnectionProfile"
+   },
+   {
+    "label": "בדיקת קישוריות",
+    "text": "ping 192.168.75.172"
+   }
+  ],
+  "guiSteps": [
+   "בהתקנה בחר Windows Server 2025 Datacenter (Desktop Experience). בלי הסימון תקבל Server Core (בלי GUI).",
+   "שנה שם מחשב, הפעל מחדש.",
+   "הגדר IP סטטי ו-DNS (ncpa.cpl ← Properties ← IPv4).",
+   "אם ping נכשל: בדוק Get-NetConnectionProfile. אם Public, החלף ל-Private והפעל את כלל Echo Request."
+  ],
+  "ifNotWorking": "ping עדיין נכשל: בדוק VLAN/רשת הווירטואלית ב-VMware, ושה-IP לא תפוס על ידי מכונה אחרת (arp -a).",
+  "notes": "מקור: דוח מעבדת Windows Server 2025 (שיעור 1-2). פקודות שמסומנות \"תבנית\" הן נוסחה סטנדרטית ולא הועתקו מהדוח. ב-VMware Easy Install שדה סיסמת Administrator נשאר ריק, ראה רשומה 02.",
+  "tags": [
+   "מעבדה",
+   "lab",
+   "בניית דומיין",
+   "build",
+   "ip",
+   "dns",
+   "ping",
+   "network profile",
+   "hostname"
+  ],
+  "createdAt": 1760600000000,
+  "updatedAt": 1760600000000
+ },
+ {
+  "id": "build-02",
+  "titleHe": "02 · קידום DC1 ויצירת היער lab.local",
+  "titleEn": "Promote DC1 and create the forest",
+  "category": "Build",
+  "symptom": "הקמת הדומיין הראשון: התקנת תפקיד AD DS, יצירת היער, DNS משולב.",
+  "commands": [
+   {
+    "label": "סיסמת Administrator מקומי חזקה (חובה לפני הקידום)",
+    "text": "net user Administrator *"
+   },
+   {
+    "label": "התקנת התפקיד",
+    "text": "Install-WindowsFeature -Name AD-Domain-Services -IncludeManagementTools"
+   },
+   {
+    "label": "יצירת היער (יבקש סיסמת DSRM, ואז מפעיל מחדש)",
+    "text": "Install-ADDSForest -DomainName \"lab.local\" -DomainNetbiosName \"LAB\" -InstallDns"
+   },
+   {
+    "label": "אימות DC",
+    "text": "Get-ADDomainController"
+   },
+   {
+    "label": "בעלי FSMO (צריך 5/5 על DC1)",
+    "text": "netdom query fsmo"
+   },
+   {
+    "label": "בדיקות תקינות",
+    "text": "dcdiag /q"
+   }
+  ],
+  "guiSteps": [
+   "Server Manager ← Add Roles and Features ← Active Directory Domain Services (חלופה ל-PowerShell).",
+   "Promote this server to a domain controller ← Add a new forest ← lab.local.",
+   "אחרי האתחול: dsa.msc ו-dnsmgmt.msc, ובדוק שיש Zones בשם lab.local ו-_msdcs.lab.local."
+  ],
+  "ifNotWorking": "אם Install-ADDSForest נכשל על \"password does not meet requirements\": הגדר סיסמה ל-Administrator המקומי עם net user Administrator * והרץ שוב.",
+  "notes": "מקור: דוח מעבדת Windows Server 2025 (שיעור 3). שמור את סיסמת DSRM במקום בטוח (מחוץ לאפליקציה).",
+  "tags": [
+   "מעבדה",
+   "lab",
+   "בניית דומיין",
+   "build",
+   "forest",
+   "יער",
+   "promote",
+   "adds",
+   "dc1"
+  ],
+  "createdAt": 1760600000000,
+  "updatedAt": 1760600000000
+ },
+ {
+  "id": "build-03",
+  "titleHe": "03 · הצטרפות שרתים לדומיין",
+  "titleEn": "Join servers to the domain",
+  "category": "Build",
+  "symptom": "TS1, SQL1, VPN1, MAIL1 ו-DC2 מצטרפים אחרי ש-DC1 פעיל וה-DNS שלהם מצביע אליו.",
+  "commands": [
+   {
+    "label": "DNS ל-DC1",
+    "text": "Set-DnsClientServerAddress -InterfaceAlias \"Ethernet0\" -ServerAddresses 192.168.75.171"
+   },
+   {
+    "label": "הצטרפות (TS1, SQL1)",
+    "text": "Add-Computer -DomainName \"lab.local\" -Credential LAB\\Administrator -Restart"
+   },
+   {
+    "label": "הצטרפות עם חשבון מנהל אישי (VPN1, MAIL1)",
+    "text": "Add-Computer -DomainName \"lab.local\" -Credential LAB\\admin-shlomi -Restart"
+   },
+   {
+    "label": "אימות לאחר אתחול",
+    "text": "nltest /sc_verify:lab.local"
+   },
+   {
+    "label": "מי המחשבים בדומיין",
+    "text": "Get-ADComputer -Filter * | Select Name,DistinguishedName"
+   }
+  ],
+  "guiSteps": [
+   "sysdm.cpl ← Change ← Member of: Domain ← lab.local ← הזן פרטי מנהל דומיין (חלופה ל-PowerShell).",
+   "הפעל מחדש. בכניסה בחר LAB\\user.",
+   "ב-dsa.msc: המחשבים מופיעים ב-Computers. העבר אותם ל-OU המתאים (רשומה 04)."
+  ],
+  "ifNotWorking": "אם \"The user name or password is incorrect\": ודא שמקלידים נכון (בדוק עם חשבון אחר), ושה-DNS מצביע ל-DC1.",
+  "notes": "מקור: דוח מעבדת Windows Server 2025 (שיעור 3, 12, 13). ב-VPN1 כרטיס ה-Internal חזר ל-DHCP אחרי ההצטרפות, ראה רשומה 13. אחרי הצטרפות בדוק תמיד את תצורת ה-IP.",
+  "tags": [
+   "מעבדה",
+   "lab",
+   "בניית דומיין",
+   "build",
+   "join",
+   "הצטרפות",
+   "add-computer",
+   "domain join"
+  ],
+  "createdAt": 1760600000000,
+  "updatedAt": 1760600000000
+ },
+ {
+  "id": "build-04",
+  "titleHe": "04 · OU, משתמשים וקבוצות",
+  "titleEn": "OUs, users and groups",
+  "category": "Build",
+  "symptom": "מבנה ארגוני במקום להשאיר אובייקטים ב-Containers ברירת המחדל: Servers, Corp-Users, ServiceAccounts.",
+  "commands": [
+   {
+    "label": "OU ראשי לשרתים",
+    "text": "New-ADOrganizationalUnit -Name \"Servers\" -Path \"DC=lab,DC=local\""
+   },
+   {
+    "label": "OU משנה",
+    "text": "New-ADOrganizationalUnit -Name \"TerminalServers\" -Path \"OU=Servers,DC=lab,DC=local\"; New-ADOrganizationalUnit -Name \"DatabaseServers\" -Path \"OU=Servers,DC=lab,DC=local\""
+   },
+   {
+    "label": "OU משתמשים",
+    "text": "New-ADOrganizationalUnit -Name \"Corp-Users\" -Path \"DC=lab,DC=local\"; New-ADOrganizationalUnit -Name \"Admins\" -Path \"OU=Corp-Users,DC=lab,DC=local\"; New-ADOrganizationalUnit -Name \"Staff\" -Path \"OU=Corp-Users,DC=lab,DC=local\""
+   },
+   {
+    "label": "OU לחשבונות שירות (נפרד מבני אדם)",
+    "text": "New-ADOrganizationalUnit -Name \"ServiceAccounts\" -Path \"DC=lab,DC=local\""
+   },
+   {
+    "label": "הזזת שרתים ל-OU (דוגמה)",
+    "text": "Move-ADObject -Identity \"CN=TS1,CN=Computers,DC=lab,DC=local\" -TargetPath \"OU=TerminalServers,OU=Servers,DC=lab,DC=local\""
+   },
+   {
+    "label": "משתמש (תבנית)",
+    "text": "New-ADUser -Name \"Danny Staff\" -SamAccountName danny -UserPrincipalName danny@lab.local -Path \"OU=Staff,OU=Corp-Users,DC=lab,DC=local\" -AccountPassword (Read-Host -AsSecureString \"Password\") -Enabled $true"
+   },
+   {
+    "label": "קבוצת אבטחה (תבנית)",
+    "text": "New-ADGroup -Name \"IT-Admins\" -GroupScope Global -Path \"OU=Admins,OU=Corp-Users,DC=lab,DC=local\""
+   },
+   {
+    "label": "הוספה לקבוצה",
+    "text": "Add-ADGroupMember -Identity \"IT-Admins\" -Members admin-shlomi"
+   }
+  ],
+  "guiSteps": [
+   "dsa.msc ← קליק ימני על הדומיין ← New ← Organizational Unit.",
+   "גרור מחשבים מ-Computers ל-OU הנכון, או השתמש ב-Move-ADObject.",
+   "חשבון מנהל אישי (admin-shlomi) במקום Administrator המובנה, והוספה לקבוצת IT-Admins.",
+   "חשבונות שירות ב-OU נפרד, כדי ש-GPO של עובדים לא ישפיעו עליהם בטעות."
+  ],
+  "ifNotWorking": "",
+  "notes": "מקור: דוח מעבדת Windows Server 2025 (שיעור 4, 7). פקודות שמסומנות \"תבנית\" הן נוסחה סטנדרטית ולא הועתקו מהדוח. OU הוא מיקום ולא קבוצת אבטחה. אי אפשר לתת הרשאה ל-OU, רק לקבוצה.",
+  "tags": [
+   "מעבדה",
+   "lab",
+   "בניית דומיין",
+   "build",
+   "ou",
+   "organizational unit",
+   "users",
+   "groups",
+   "service account"
+  ],
+  "createdAt": 1760600000000,
+  "updatedAt": 1760600000000
+ },
+ {
+  "id": "build-05",
+  "titleHe": "05 · GPO: יצירה, קישור והוכחת אכיפה",
+  "titleEn": "GPO: create, link, prove enforcement",
+  "category": "Build",
+  "symptom": "יצירת מדיניות שחוסמת Control Panel לעובדים, קישור ל-OU Staff, והוכחה שהיא חלה בפועל.",
+  "commands": [
+   {
+    "label": "יצירת GPO (תבנית)",
+    "text": "New-GPO -Name \"Staff-Restrictions\""
+   },
+   {
+    "label": "קישור ל-OU (תבנית)",
+    "text": "New-GPLink -Name \"Staff-Restrictions\" -Target \"OU=Staff,OU=Corp-Users,DC=lab,DC=local\""
+   },
+   {
+    "label": "החלה מיידית",
+    "text": "gpupdate /force"
+   },
+   {
+    "label": "מה חל על המשתמש",
+    "text": "gpresult /r /scope user"
+   }
+  ],
+  "guiSteps": [
+   "gpmc.msc ← Group Policy Objects ← קליק ימני ← New ← Staff-Restrictions.",
+   "Edit ← User Configuration ← Policies ← Administrative Templates ← Control Panel ← Prohibit access to Control Panel and PC settings ← Enabled.",
+   "קליק ימני על OU Staff ← Link an Existing GPO ← בחר את ה-GPO.",
+   "הוכחה: התחבר כ-danny ל-TS1 ופתח Control Panel. צפויה חסימה (\"This operation has been cancelled due to restrictions\")."
+  ],
+  "ifNotWorking": "אם לא חל: gpresult /h C:\\gp.html ובדוק קישור ל-OU הנכון, Security Filtering והאם המשתמש בתוך ה-OU.",
+  "notes": "מקור: דוח מעבדת Windows Server 2025 (שיעור 5). פקודות שמסומנות \"תבנית\" הן נוסחה סטנדרטית ולא הועתקו מהדוח. ",
+  "tags": [
+   "מעבדה",
+   "lab",
+   "בניית דומיין",
+   "build",
+   "gpo",
+   "group policy",
+   "link",
+   "enforcement"
+  ],
+  "createdAt": 1760600000000,
+  "updatedAt": 1760600000000
+ },
+ {
+  "id": "build-06",
+  "titleHe": "06 · RDS על TS1: Session Collection והרשאות",
+  "titleEn": "RDS on TS1: collection and access control",
+  "category": "Build",
+  "symptom": "פריסת Remote Desktop Services, יצירת Collection והגבלת הכניסה לקבוצות בלבד (עם מבחן שלילי וחיובי).",
+  "commands": [
+   {
+    "label": "מצב מנהל דומיין: פריסה (בדוח נעשה באשף GUI)",
+    "text": "New-RDSessionDeployment -ConnectionBroker TS1.lab.local -WebAccessServer TS1.lab.local -SessionHost TS1.lab.local"
+   },
+   {
+    "label": "Collection (תבנית)",
+    "text": "New-RDSessionCollection -CollectionName \"Staff-Desktop\" -SessionHost TS1.lab.local -ConnectionBroker TS1.lab.local"
+   },
+   {
+    "label": "קבוצת אבטחה למשתמשי RDP (תבנית)",
+    "text": "New-ADGroup -Name \"Staff-Users\" -GroupScope Global -Path \"OU=Staff,OU=Corp-Users,DC=lab,DC=local\""
+   },
+   {
+    "label": "הגבלת ה-Collection לקבוצות",
+    "text": "Set-RDSessionCollectionConfiguration -CollectionName \"Staff-Desktop\" -UserGroup \"LAB\\Staff-Users\",\"LAB\\IT-Admins\" -ConnectionBroker \"TS1.lab.local\""
+   },
+   {
+    "label": "Loopback (דרש הפעלה מחדש)",
+    "text": "reg add \"HKLM\\SYSTEM\\CurrentControlSet\\Control\\Lsa\" /v DisableLoopbackCheck /t REG_DWORD /d 1 /f"
+   },
+   {
+    "label": "Loopback: שמות מותרים",
+    "text": "reg add \"HKLM\\SYSTEM\\CurrentControlSet\\Control\\Lsa\\MSV1_0\" /v BackConnectionHostNames /t REG_MULTI_SZ /d TS1.lab.local /f"
+   }
+  ],
+  "guiSteps": [
+   "Server Manager ← Add Roles and Features ← Remote Desktop Services installation ← Standard deployment ← Connection Broker + Web Access + Session Host.",
+   "חובה להתחבר כמשתמש דומיין (LAB\\Administrator), לא כמנהל מקומי: \"You must be logged on as a domain user\".",
+   "Collections ← Create Session Collection ← בחר קבוצת אבטחה (לא OU).",
+   "מבחן שלילי: משתמש שאינו בקבוצה נחסם (\"החיבור נדחה\"). מבחן חיובי אחרי הוספת הקבוצה ל-Collection.",
+   "חיבור בדיקה מבחוץ: mstsc /v:192.168.75.172."
+  ],
+  "ifNotWorking": "שגיאת \"Name Not Found\" בהוספת קבוצה: ודא שבחרת Security Group ולא OU. חיבור נחסם למנהל: הוסף את IT-Admins ל-UserGroup (הפקודה בשורה 4).",
+  "notes": "מקור: דוח מעבדת Windows Server 2025 (שיעור 6). פקודות שמסומנות \"תבנית\" הן נוסחה סטנדרטית ולא הועתקו מהדוח. DisableLoopbackCheck מחליש הגנה מפני NTLM reflection. BackConnectionHostNames לבדו הוא הצר והבטוח יותר, והדוח הפעיל את שניהם.",
+  "tags": [
+   "מעבדה",
+   "lab",
+   "בניית דומיין",
+   "build",
+   "rds",
+   "terminal server",
+   "ts1",
+   "session collection",
+   "loopback"
+  ],
+  "createdAt": 1760600000000,
+  "updatedAt": 1760600000000
+ },
+ {
+  "id": "build-07",
+  "titleHe": "07 · SQL Server 2022 על SQL1 וחשבון שירות",
+  "titleEn": "SQL Server 2022 on SQL1 + service account",
+  "category": "Build",
+  "symptom": "התקנת SQL Server Developer במצב Windows Authentication, פתיחת פורט 1433 ויצירת חשבון שירות ייעודי.",
+  "commands": [
+   {
+    "label": "בדיקת גרסה",
+    "text": "sqlcmd -S localhost -E -Q \"SELECT @@VERSION\""
+   },
+   {
+    "label": "שחרור מצב Single User שנתקע אחרי כשל Setup",
+    "text": "Restart-Service MSSQLSERVER -Force"
+   },
+   {
+    "label": "כלל חומת אש (תבנית, מוגבל לרשת המעבדה)",
+    "text": "New-NetFirewallRule -DisplayName \"SQL Server 1433\" -Direction Inbound -Protocol TCP -LocalPort 1433 -Action Allow -RemoteAddress 192.168.75.0/24"
+   },
+   {
+    "label": "חשבון שירות (תבנית)",
+    "text": "New-ADUser -Name \"svc-bankapp\" -SamAccountName svc-bankapp -Path \"OU=ServiceAccounts,DC=lab,DC=local\" -AccountPassword (Read-Host -AsSecureString \"Password\") -Enabled $true -PasswordNeverExpires $true -CannotChangePassword $true"
+   }
+  ],
+  "guiSteps": [
+   "ב-Setup בחר Windows authentication mode והוסף LAB\\Administrator ו-LAB\\IT-Admins כ-SQL Administrators.",
+   "אם Setup נכשל עם שגיאה 9001 (msdb): בדוק אם השירות Running אבל \"Server is in single user mode\". הרץ Restart-Service MSSQLSERVER -Force.",
+   "התקן SSMS והתחבר עם Windows Authentication (ב-SSMS 22 Encrypt=Mandatory כברירת מחדל, ולכן סומן Trust Server Certificate).",
+   "חשבון שירות שייך ל-OU=ServiceAccounts, לא ל-OU של עובדים."
+  ],
+  "ifNotWorking": "",
+  "notes": "מקור: דוח מעבדת Windows Server 2025 (שיעור 7). פקודות שמסומנות \"תבנית\" הן נוסחה סטנדרטית ולא הועתקו מהדוח. בדוח כלל חומת האש ל-1433 נפתח ל-Any, ומתוכנן להגבלה ל-IPs ספציפיים; בתבנית כאן כבר מוגבל.",
+  "tags": [
+   "מעבדה",
+   "lab",
+   "בניית דומיין",
+   "build",
+   "sql",
+   "sql server",
+   "sql1",
+   "service account",
+   "svc"
+  ],
+  "createdAt": 1760600000000,
+  "updatedAt": 1760600000000
+ },
+ {
+  "id": "build-08",
+  "titleHe": "08 · הרשאות מינימליות ל-Database (BankDemo)",
+  "titleEn": "Least-privilege database access",
+  "category": "Build",
+  "symptom": "Login מבוסס חשבון AD, ללא SQL Login נפרד, עם datareader ו-datawriter בלבד (בלי db_owner).",
+  "commands": [
+   {
+    "label": "יצירת ה-DB",
+    "text": "CREATE DATABASE BankDemo;"
+   },
+   {
+    "label": "Login מ-Windows",
+    "text": "CREATE LOGIN [LAB\\svc-bankapp] FROM WINDOWS;"
+   },
+   {
+    "label": "מיפוי והרשאות מינימליות",
+    "text": "USE BankDemo;\nCREATE USER [LAB\\svc-bankapp] FOR LOGIN [LAB\\svc-bankapp];\nALTER ROLE db_datareader ADD MEMBER [LAB\\svc-bankapp];\nALTER ROLE db_datawriter ADD MEMBER [LAB\\svc-bankapp];"
+   },
+   {
+    "label": "אימות הרשאות",
+    "text": "SELECT dp.name, r.name AS role\nFROM sys.database_role_members m\nJOIN sys.database_principals r ON r.principal_id = m.role_principal_id\nJOIN sys.database_principals dp ON dp.principal_id = m.member_principal_id\nWHERE dp.name = N'LAB\\svc-bankapp';"
+   }
+  ],
+  "guiSteps": [
+   "SSMS ← Security ← Logins ← New Login ← Windows authentication ← LAB\\svc-bankapp.",
+   "BankDemo ← User Mapping ← סמן db_datareader ו-db_datawriter בלבד.",
+   "ודא ב-Security ← Users של ה-DB שהמשתמש מופיע."
+  ],
+  "ifNotWorking": "",
+  "notes": "מקור: דוח מעבדת Windows Server 2025 (שיעור 8). פקודות שמסומנות \"תבנית\" הן נוסחה סטנדרטית ולא הועתקו מהדוח. הפרדת תפקידים: האפליקציה נוגעת בנתונים, האדמין בתחזוקה בלבד.",
+  "tags": [
+   "מעבדה",
+   "lab",
+   "בניית דומיין",
+   "build",
+   "sql",
+   "least privilege",
+   "login",
+   "bankdemo",
+   "permissions"
+  ],
+  "createdAt": 1760600000000,
+  "updatedAt": 1760600000000
+ },
+ {
+  "id": "build-09",
+  "titleHe": "09 · PKI: AD CS ותבנית תעודה (SQLServerTLS)",
+  "titleEn": "PKI: AD CS and certificate template",
+  "category": "Build",
+  "symptom": "Enterprise CA על DC1, תבנית תעודה מותאמת לשרת, והנפקת תעודה ל-SQL1.",
+  "commands": [
+   {
+    "label": "התקנת תפקיד CA (תבנית)",
+    "text": "Install-WindowsFeature ADCS-Cert-Authority -IncludeManagementTools"
+   },
+   {
+    "label": "הגדרת Enterprise Root CA (תבנית)",
+    "text": "Install-AdcsCertificationAuthority -CAType EnterpriseRootCa -CACommonName \"lab-DC1-CA\" -KeyLength 4096 -HashAlgorithmName SHA256 -ValidityPeriod Years -ValidityPeriodUnits 10 -Force"
+   },
+   {
+    "label": "רענון מדיניות ב-SQL1 לפני בקשת תעודה",
+    "text": "gpupdate /force"
+   },
+   {
+    "label": "תעודות בחנות המחשב",
+    "text": "certutil -store my"
+   }
+  ],
+  "guiSteps": [
+   "Server Manager ← AD CS ← Enterprise CA (Root).",
+   "certtmpl.msc ← שכפל תבנית Web Server לשם SQLServerTLS ← Application Policies: Server Authentication.",
+   "לשונית Security: Domain Computers ← Enroll + Autoenroll.",
+   "certsrv.msc ← Certificate Templates ← New ← Certificate Template to Issue ← SQLServerTLS.",
+   "ב-SQL1: certlm.msc ← Personal ← Certificates ← All Tasks ← Request New Certificate ← SQLServerTLS."
+  ],
+  "ifNotWorking": "\"Certificate types are not available\": הרץ gpupdate /force ב-SQL1, המתן דקה ונסה שוב. ההרשאות על התבנית עוד לא רועננו.",
+  "notes": "מקור: דוח מעבדת Windows Server 2025 (שיעור 8). פקודות שמסומנות \"תבנית\" הן נוסחה סטנדרטית ולא הועתקו מהדוח. ",
+  "tags": [
+   "מעבדה",
+   "lab",
+   "בניית דומיין",
+   "build",
+   "pki",
+   "ad cs",
+   "ca",
+   "certificate",
+   "template"
+  ],
+  "createdAt": 1760600000000,
+  "updatedAt": 1760600000000
+ },
+ {
+  "id": "build-10",
+  "titleHe": "10 · TLS ב-SQL Server (Force Encryption)",
+  "titleEn": "SQL Server TLS (Force Encryption)",
+  "category": "Build",
+  "symptom": "קישור התעודה לשירות SQL והפעלת הצפנה כפויה על כל החיבורים.",
+  "commands": [
+   {
+    "label": "Restart אחרי שינוי הגדרות TLS",
+    "text": "Restart-Service MSSQLSERVER -Force"
+   },
+   {
+    "label": "אימות שהחיבור מוצפן",
+    "text": "SELECT session_id, encrypt_option FROM sys.dm_exec_connections WHERE session_id = @@SPID;"
+   }
+  ],
+  "guiSteps": [
+   "certlm.msc ← Personal ← Certificates ← התעודה ← All Tasks ← Manage Private Keys ← Add.",
+   "ב-Locations בחר את המחשב המקומי. הקלד NT SERVICE\\MSSQLSERVER ← Check Names (אם \"Name Not Found\", תקן את הפורמט והמיקום) ← Full Control.",
+   "SQL Server Configuration Manager ← Protocols for MSSQLSERVER ← Properties ← Certificate: בחר את התעודה.",
+   "לשונית Flags: Force Encryption = Yes ← Restart לשירות (אם נכשל פעם ראשונה, הרץ שוב).",
+   "בלקוח: Encrypt=Mandatory. עד שה-CA הפנימי מופץ, סמן Trust Server Certificate."
+  ],
+  "ifNotWorking": "אם השירות לא עולה: בדוק הרשאת המפתח הפרטי לחשבון השירות, וכי התעודה היא Server Authentication והשם תואם.",
+  "notes": "מקור: דוח מעבדת Windows Server 2025 (שיעור 9). פקודות שמסומנות \"תבנית\" הן נוסחה סטנדרטית ולא הועתקו מהדוח. ",
+  "tags": [
+   "מעבדה",
+   "lab",
+   "בניית דומיין",
+   "build",
+   "tls",
+   "encryption",
+   "force encryption",
+   "sql",
+   "certificate"
+  ],
+  "createdAt": 1760600000000,
+  "updatedAt": 1760600000000
+ },
+ {
+  "id": "build-11",
+  "titleHe": "11 · TDE, Always Encrypted ו-Auditing",
+  "titleEn": "TDE, Always Encrypted and auditing",
+  "category": "Build",
+  "symptom": "הצפנה במנוחה (TDE) עם גיבוי תעודה, הצפנת עמודות, ו-Audit על ה-DB.",
+  "commands": [
+   {
+    "label": "Master Key ותעודה (תבנית)",
+    "text": "USE master;\nCREATE MASTER KEY ENCRYPTION BY PASSWORD = '<strong-password>';\nCREATE CERTIFICATE BankDemoTDECert WITH SUBJECT = 'BankDemo TDE';"
+   },
+   {
+    "label": "מפתח הצפנה והפעלה (תבנית)",
+    "text": "USE BankDemo;\nCREATE DATABASE ENCRYPTION KEY WITH ALGORITHM = AES_256 ENCRYPTION BY SERVER CERTIFICATE BankDemoTDECert;\nALTER DATABASE BankDemo SET ENCRYPTION ON;"
+   },
+   {
+    "label": "גיבוי התעודה והמפתח הפרטי (קריטי! בלי זה אין שחזור)",
+    "text": "BACKUP CERTIFICATE BankDemoTDECert TO FILE = 'C:\\TDE_Backup\\BankDemoTDECert.cer'\nWITH PRIVATE KEY (FILE = 'C:\\TDE_Backup\\BankDemoTDECert.pvk', ENCRYPTION BY PASSWORD = '<strong-password>');"
+   },
+   {
+    "label": "הגבלת התיקייה למנהלים בלבד (תבנית)",
+    "text": "icacls C:\\TDE_Backup /inheritance:r /grant \"Administrators:(OI)(CI)F\" \"SYSTEM:(OI)(CI)F\""
+   },
+   {
+    "label": "אימות (encryption_state = 3 = מוצפן)",
+    "text": "SELECT DB_NAME(database_id), encryption_state FROM sys.dm_database_encryption_keys;"
+   },
+   {
+    "label": "הוכחה: חיבור כחשבון השירות",
+    "text": "runas /user:LAB\\svc-bankapp cmd"
+   },
+   {
+    "label": "בחלון החדש: מי אני, ומה רואים בעמודות מוצפנות",
+    "text": "sqlcmd -S SQL1 -d BankDemo -E -Q \"SELECT SUSER_SNAME(); SELECT * FROM Customers\""
+   },
+   {
+    "label": "Audit (תבנית T-SQL, בדוח נעשה ב-GUI)",
+    "text": "USE master;\nCREATE SERVER AUDIT BankDemoAudit TO FILE (FILEPATH = 'C:\\SQLAudit\\');\nALTER SERVER AUDIT BankDemoAudit WITH (STATE = ON);\nUSE BankDemo;\nCREATE DATABASE AUDIT SPECIFICATION BankDemoDbAudit FOR SERVER AUDIT BankDemoAudit\nADD (SELECT, INSERT, UPDATE, DELETE ON DATABASE::BankDemo BY public) WITH (STATE = ON);"
+   }
+  ],
+  "guiSteps": [
+   "Always Encrypted: SSMS ← Tables ← Customers ← קליק ימני ← Encrypt Columns ← FullName ו-Balance.",
+   "בדוח, ההוכחה היא שחיבור רגיל (בלי Column Encryption Setting) רואה ערכים לא קריאים בעמודות המוצפנות.",
+   "Audit ב-GUI: BankDemo ← Security ← Database Audit Specifications ← New.",
+   "בדוק ב-Audit Log (SSMS ← Security ← Audits ← View Audit Logs) שהפעולות נרשמות."
+  ],
+  "ifNotWorking": "",
+  "notes": "מקור: דוח מעבדת Windows Server 2025 (שיעור 10). פקודות שמסומנות \"תבנית\" הן נוסחה סטנדרטית ולא הועתקו מהדוח. סיסמאות בפקודות הן placeholders. שמור אותן במנהל סיסמאות. בלי גיבוי התעודה אי אפשר לשחזר DB מוצפן.",
+  "tags": [
+   "מעבדה",
+   "lab",
+   "בניית דומיין",
+   "build",
+   "tde",
+   "always encrypted",
+   "audit",
+   "sql",
+   "backup certificate"
+  ],
+  "createdAt": 1760600000000,
+  "updatedAt": 1760600000000
+ },
+ {
+  "id": "build-12",
+  "titleHe": "12 · Domain Controller שני (DC2) ורפליקציה",
+  "titleEn": "Second DC (DC2) and replication",
+  "category": "Build",
+  "symptom": "DC נוסף לעמידות ולרפליקציית AD, ואימות שהכול מסונכרן.",
+  "commands": [
+   {
+    "label": "התקנה (תבנית)",
+    "text": "Install-WindowsFeature -Name AD-Domain-Services -IncludeManagementTools"
+   },
+   {
+    "label": "קידום (תבנית עם Credential)",
+    "text": "Install-ADDSDomainController -DomainName lab.local -InstallDns -Credential (Get-Credential LAB\\admin-shlomi)"
+   },
+   {
+    "label": "אימות",
+    "text": "Get-ADDomainController -Filter * | Select Name,IPv4Address,IsGlobalCatalog"
+   },
+   {
+    "label": "סיכום רפליקציה (0 כשלים)",
+    "text": "repadmin /replsummary"
+   },
+   {
+    "label": "סנכרון מלא",
+    "text": "repadmin /syncall /AdeP"
+   },
+   {
+    "label": "בדיקת DNS",
+    "text": "dcdiag /test:dns"
+   },
+   {
+    "label": "אם dcdiag נכשל: בדוק פרופיל רשת",
+    "text": "Get-NetConnectionProfile"
+   },
+   {
+    "label": "תיקון: Private, Netlogon ורישום DNS",
+    "text": "Set-NetConnectionProfile -NetworkCategory Private; Restart-Service Netlogon -Force; ipconfig /registerdns"
+   }
+  ],
+  "guiSteps": [
+   "לפני הקידום: DNS של DC2 מצביע ל-DC1, והשרת חבר בדומיין.",
+   "Promote to domain controller ← Add a domain controller to an existing domain ← lab.local.",
+   "אחרי האתחול: dssite.msc ← Servers ← DC2 ← NTDS Settings ← חיבורי רפליקציה.",
+   "dcdiag נכשל עם רשומות SRV חסרות ו-Event 1988: סיבה אפשרית היא פרופיל רשת Public ב-DC עצמו."
+  ],
+  "ifNotWorking": "אם עדיין לא מסתנכרן: dcdiag /v, ואז בדוק DNS של שני ה-DC ופורטים 135, 389, 445, 53 ביניהם.",
+  "notes": "מקור: דוח מעבדת Windows Server 2025 (שיעור 11). פקודות שמסומנות \"תבנית\" הן נוסחה סטנדרטית ולא הועתקו מהדוח. שני ה-DC חייבים להיות דולקים לפני כל עבודה על AD או Exchange. כיבוי אחד גרם ליותר מתקלה אחת במעבדה.",
+  "tags": [
+   "מעבדה",
+   "lab",
+   "בניית דומיין",
+   "build",
+   "dc2",
+   "replication",
+   "repadmin",
+   "additional domain controller"
+  ],
+  "createdAt": 1760600000000,
+  "updatedAt": 1760600000000
+ },
+ {
+  "id": "build-13",
+  "titleHe": "13 · VPN1: רשת dual-homed ו-RRAS (IKEv2)",
+  "titleEn": "VPN1: dual-homed network and RRAS (IKEv2)",
+  "category": "Build",
+  "symptom": "שער VPN עם שני כרטיסי רשת: External (אינטרנט) ו-Internal (רשת המעבדה), RRAS מוגבל ל-IKEv2.",
+  "commands": [
+   {
+    "label": "שמות ממשקים",
+    "text": "Rename-NetAdapter -Name \"Ethernet0\" -NewName \"External\"; Rename-NetAdapter -Name \"Ethernet1\" -NewName \"Internal\""
+   },
+   {
+    "label": "DNS פנימי ל-DC1",
+    "text": "Set-DnsClientServerAddress -InterfaceAlias \"Internal\" -ServerAddresses \"192.168.75.171\""
+   },
+   {
+    "label": "הסרת Default Gateway מהממשק הפנימי",
+    "text": "Get-NetRoute -InterfaceAlias \"Internal\" -DestinationPrefix \"0.0.0.0/0\" | Remove-NetRoute -Confirm:$false"
+   },
+   {
+    "label": "אחרי הצטרפות לדומיין: להחזיר כתובת סטטית פנימית (תבנית)",
+    "text": "Set-NetIPInterface -InterfaceAlias \"Internal\" -Dhcp Disabled; New-NetIPAddress -InterfaceAlias \"Internal\" -IPAddress 192.168.75.166 -PrefixLength 24"
+   },
+   {
+    "label": "התקנת תפקידי RRAS",
+    "text": "Install-WindowsFeature -Name DirectAccess-VPN, Routing -IncludeManagementTools"
+   }
+  ],
+  "guiSteps": [
+   "חייב להיות default route אחד בלבד (דרך External). לפנים אין Gateway.",
+   "אחרי Domain Join בדוק את הממשק הפנימי: הוא חזר ל-DHCP במעבדה.",
+   "rrasmgmt.msc ← Configure and Enable ← Deploy VPN only (לא DirectAccess) ← Custom configuration ← VPN access.",
+   "Properties ← Security: \"Allow custom IPsec policy\" לא מסומן (אימות לפי תעודה). Authentication Methods: EAP ו-MS-CHAP v2.",
+   "IPv4 ← Static address pool: 192.168.75.200 עד 192.168.75.220. בדוק ש-Number הוא 21 (277 משמעותו טעות באוקטט האחרון).",
+   "שם ה-VPN בדוח (placeholder): myvpn.duckdns.org."
+  ],
+  "ifNotWorking": "אם ניסיון לקבוע כתובת סטטית נכשל כי היא תפוסה ב-DHCP: כבה DHCP על הממשק, ואז הגדר מחדש.",
+  "notes": "מקור: דוח מעבדת Windows Server 2025 (שיעור 12). פקודות שמסומנות \"תבנית\" הן נוסחה סטנדרטית ולא הועתקו מהדוח. IKEv2 נבחר על פני SSTP ו-L2TP: תמיכה מובנית ב-Windows ו-iOS, בלי Pre-Shared Key גלוי.",
+  "tags": [
+   "מעבדה",
+   "lab",
+   "בניית דומיין",
+   "build",
+   "vpn",
+   "rras",
+   "ikev2",
+   "dual-homed",
+   "vpn1"
+  ],
+  "createdAt": 1760600000000,
+  "updatedAt": 1760600000000
+ },
+ {
+  "id": "build-14",
+  "titleHe": "14 · VPN1: תעודת שרת ל-IKEv2 (certreq)",
+  "titleEn": "VPN1: server certificate for IKEv2",
+  "category": "Build",
+  "symptom": "תעודה שה-SAN שלה תואם בדיוק לשם שהלקוח מקליד (myvpn.duckdns.org), מונפקת מה-CA הפנימי.",
+  "commands": [
+   {
+    "label": "יצירת בקשה",
+    "text": "certreq -new C:\\vpn-cert-request.inf C:\\vpn-cert-request.req"
+   },
+   {
+    "label": "שליחה ל-CA (כמשתמש דומיין!)",
+    "text": "certreq -submit -config \"DC1.lab.local\\lab-DC1-CA\" C:\\vpn-cert-request.req C:\\vpn-cert-request.cer"
+   },
+   {
+    "label": "התקנת התעודה",
+    "text": "certreq -accept C:\\vpn-cert-request.cer"
+   },
+   {
+    "label": "בדיקת מי המשתמש",
+    "text": "whoami"
+   },
+   {
+    "label": "אימות התעודה",
+    "text": "certutil -store my"
+   },
+   {
+    "label": "דוגמה לקובץ INF (תבנית, לא הועתק מהדוח)",
+    "text": "[Version]\nSignature=\"$Windows NT$\"\n[NewRequest]\nSubject = \"CN=myvpn.duckdns.org\"\nKeyLength = 2048\nKeySpec = 1\nKeyUsage = 0xA0\nMachineKeySet = True\nExportable = False\nRequestType = PKCS10\n[EnhancedKeyUsageExtension]\nOID = 1.3.6.1.5.5.7.3.1\n[Extensions]\n2.5.29.17 = \"{text}\"\n_continue_ = \"dns=myvpn.duckdns.org\"\n[RequestAttributes]\nCertificateTemplate = VPN-Server-Auth"
+   }
+  ],
+  "guiSteps": [
+   "certtmpl.msc ← שכפל Web Server לתבנית VPN-Server-Auth ← Subject Name: Supply in the request ← Security: VPN1$ עם Read + Enroll (תוקף שנתיים, חידוש 6 שבועות).",
+   "certsrv.msc ← Certificate Templates ← New ← Certificate Template to Issue ← VPN-Server-Auth.",
+   "ב-VPN1: certreq -new, certreq -submit, certreq -accept.",
+   "אימות: certlm.msc ← Personal ← התעודה עם Subject ו-DNS Name myvpn.duckdns.org.",
+   "IKEv2 ב-RRAS בוחר אוטומטית תעודה עם Server Authentication מ-Local Machine\\Personal, אין קישור ידני."
+  ],
+  "ifNotWorking": "\"RPC server is unavailable\" ב-certreq -submit: הסיבה במעבדה הייתה התחברות כמשתמש מקומי (VPN\\Administrator). התחבר כ-LAB\\Administrator ונסה שוב. חומת אש ו-RPC היו תקינים.",
+  "notes": "מקור: דוח מעבדת Windows Server 2025 (שיעור 12). פקודות שמסומנות \"תבנית\" הן נוסחה סטנדרטית ולא הועתקו מהדוח. ה-INF בדוח הוגדר לפי SAN ותבנית VPN-Server-Auth, אך הקובץ עצמו מופיע בצילום מסך בלבד.",
+  "tags": [
+   "מעבדה",
+   "lab",
+   "בניית דומיין",
+   "build",
+   "certreq",
+   "ikev2",
+   "certificate",
+   "san",
+   "vpn"
+  ],
+  "createdAt": 1760600000000,
+  "updatedAt": 1760600000000
+ },
+ {
+  "id": "build-15",
+  "titleHe": "15 · VPN: גישה מבחוץ (לא בוצע במעבדה)",
+  "titleEn": "VPN: external access (not done in lab)",
+  "category": "Build",
+  "symptom": "מה נדרש כדי שלקוח באינטרנט יתחבר ל-IKEv2: הפניית פורטים, DDNS, אמון ב-CA, ופרופיל לקוח.",
+  "commands": [
+   {
+    "label": "בדיקת כללי חומת אש של RRAS ב-VPN1",
+    "text": "Get-NetFirewallRule -DisplayGroup \"Routing and Remote Access\" | Select DisplayName, Enabled"
+   },
+   {
+    "label": "ייצוא תעודת ה-Root CA (לא תעודת ה-VPN)",
+    "text": "certutil -ca.cert C:\\lab-root-ca.cer"
+   },
+   {
+    "label": "הפניות בנתב",
+    "text": "UDP 500   -> 192.168.2.60   (IKE)\nUDP 4500  -> 192.168.2.60   (IPsec NAT-T)"
+   }
+  ],
+  "guiSteps": [
+   "הקצה IP פנימי קבוע ל-VPN1 בנתב (DHCP Reservation לפי MAC של External).",
+   "בנתב: Port Forwarding ל-UDP 500 ו-UDP 4500 אל VPN1. לא נדרשים פורטים נוספים ל-IKEv2 בלבד.",
+   "ודא ששם ה-DDNS מצביע על ה-IP הציבורי הנוכחי.",
+   "בלקוח חיצוני: התקן את תעודת ה-Root CA ב-Local Machine ← Trusted Root Certification Authorities.",
+   "Windows: Settings ← Network & Internet ← VPN ← Add: Windows (built-in), IKEv2, myvpn.duckdns.org, ופרטי משתמש דומייני.",
+   "בדוק דרך Hotspot סלולרי ולא דרך ה-Wi-Fi הביתי."
+  ],
+  "ifNotWorking": "חלופה נקייה: תעודה מ-CA ציבורי (Let's Encrypt) עבור שם ה-VPN, ואז אין צורך להפיץ Root CA.",
+  "notes": "מקור: דוח מעבדת Windows Server 2025 (שיעור נספח). לא בוצע במעבדה במכוון (כדי לא לשנות ניתוב ברשת הביתית); מתועד בדוח כהוראות ליישום עתידי.",
+  "tags": [
+   "מעבדה",
+   "lab",
+   "בניית דומיין",
+   "build",
+   "vpn",
+   "port forwarding",
+   "ddns",
+   "duckdns",
+   "ikev2"
+  ],
+  "createdAt": 1760600000000,
+  "updatedAt": 1760600000000
+ },
+ {
+  "id": "build-16",
+  "titleHe": "16 · Exchange SE: הכנות לפני Setup (Pre-Flight)",
+  "titleEn": "Exchange SE pre-flight checklist",
+  "category": "Build",
+  "symptom": "רוב הזמן בהתקנת Exchange במעבדה (יומיים) נבע מהכנות חסרות. עם הרשימה הזו זה שעתיים-שלוש.",
+  "commands": [
+   {
+    "label": "דיסק נתונים נפרד (תבנית)",
+    "text": "Initialize-Disk -Number 1 -PartitionStyle GPT; New-Partition -DiskNumber 1 -UseMaximumSize -DriveLetter E | Format-Volume -FileSystem NTFS -NewFileSystemLabel ExchangeDB"
+   },
+   {
+    "label": "תלויות Windows (שים לב: Web-Lgcy-Mgmt-Console לא קיים ב-WS2025)",
+    "text": "Install-WindowsFeature Server-Media-Foundation, NET-Framework-45-Features, RPC-over-HTTP-proxy,\nRSAT-Clustering, RSAT-Clustering-CmdInterface, RSAT-Clustering-Mgmt, RSAT-Clustering-PowerShell,\nWAS-Process-Model, Web-Asp-Net45, Web-Basic-Auth, Web-Client-Auth, Web-Digest-Auth, Web-Dir-Browsing,\nWeb-Dyn-Compression, Web-Http-Errors, Web-Http-Logging, Web-Http-Redirect, Web-Http-Tracing,\nWeb-ISAPI-Ext, Web-ISAPI-Filter, Web-Mgmt-Compat, Web-Metabase, Web-Lgcy-Scripting, Web-Mgmt-Console,\nWeb-Mgmt-Service, Web-Net-Ext45, Web-Request-Monitor, Web-Server, Web-Stat-Compression,\nWeb-Static-Content, Web-Windows-Auth, Web-WMI, Windows-Identity-Foundation, RSAT-ADDS"
+   },
+   {
+    "label": "בדיקת .NET (נדרש 528040 ומעלה)",
+    "text": "(Get-ItemProperty \"HKLM:\\SOFTWARE\\Microsoft\\NET Framework Setup\\NDP\\v4\\Full\").Release"
+   },
+   {
+    "label": "כיבוי Hypervisor/VBS ב-VM בלי Nested Virtualization",
+    "text": "bcdedit /set hypervisorlaunchtype off"
+   },
+   {
+    "label": "VBS ברישום (1)",
+    "text": "reg add \"HKLM\\SYSTEM\\CurrentControlSet\\Control\\DeviceGuard\" /v EnableVirtualizationBasedSecurity /t REG_DWORD /d 0 /f"
+   },
+   {
+    "label": "VBS ברישום (2)",
+    "text": "reg add \"HKLM\\SOFTWARE\\Microsoft\\DeviceGuard\" /v EnableVirtualizationBasedSecurity /t REG_DWORD /d 0 /f"
+   },
+   {
+    "label": "VBS ברישום (3)",
+    "text": "reg add \"HKLM\\SOFTWARE\\Microsoft\\DeviceGuard\" /v RequirePlatformSecurityFeatures /t REG_DWORD /d 0 /f"
+   },
+   {
+    "label": "מנהל מקומי בפועל על שרת Exchange",
+    "text": "Add-LocalGroupMember -Group \"Administrators\" -Member \"LAB\\admin-shlomi\""
+   },
+   {
+    "label": "חריגי Defender (מונע תקיעה על 16%)",
+    "text": "Add-MpPreference -ExclusionPath \"C:\\Program Files\\Microsoft\\Exchange Server\"\nAdd-MpPreference -ExclusionPath \"F:\\\"\nAdd-MpPreference -ExclusionPath \"C:\\ExchangeSetupLogs\"\nAdd-MpPreference -ExclusionProcess \"msiexec.exe\"\nAdd-MpPreference -ExclusionProcess \"Setup.exe\"\nAdd-MpPreference -ExclusionProcess \"ServiceControl.exe\""
+   },
+   {
+    "label": "חברות זמנית לצורך Prepare (תבנית)",
+    "text": "Add-ADGroupMember -Identity \"Schema Admins\" -Members admin-shlomi; Add-ADGroupMember -Identity \"Enterprise Admins\" -Members admin-shlomi"
+   },
+   {
+    "label": "הסרה מיד אחר כך (תבנית)",
+    "text": "Remove-ADGroupMember -Identity \"Schema Admins\" -Members admin-shlomi -Confirm:$false; Remove-ADGroupMember -Identity \"Enterprise Admins\" -Members admin-shlomi -Confirm:$false"
+   },
+   {
+    "label": "לפני הכל: DC-ים תקינים",
+    "text": "dcdiag /q; repadmin /replsummary"
+   }
+  ],
+  "guiSteps": [
+   "שני ה-DC דולקים ומשוכפלים (dcdiag, repadmin) לפני PrepareSchema.",
+   "התקן ידנית: Visual C++ Redistributable 2013 x64, UCMA 4.0 Core Runtime, ו-IIS URL Rewrite Module 2.1 (x64).",
+   "הורד ISO רשמי של Exchange Server SE מ-Microsoft ושמור בדיסק מקומי.",
+   "הרץ Setup רק ממסוף PowerShell קלאסי (Win+R ← powershell, עם Run as administrator), לא מ-Windows Terminal.",
+   "חברות ב-Schema Admins ו-Enterprise Admins היא זמנית בלבד. הסר מיד אחרי ה-Prepare.",
+   "אחרי כל הפעלה מחדש: מפה את ה-ISO מחדש (Mount-DiskImage אינו נשמר)."
+  ],
+  "ifNotWorking": "",
+  "notes": "מקור: דוח מעבדת Windows Server 2025 (שיעור 13 (Pre-Flight Checklist)). פקודות שמסומנות \"תבנית\" הן נוסחה סטנדרטית ולא הועתקו מהדוח. Exchange 2016/2019 יצאו משירות ב-14.10.2025. הגרסה היחידה להתקנה חדשה היא Subscription Edition (SE).",
+  "tags": [
+   "מעבדה",
+   "lab",
+   "בניית דומיין",
+   "build",
+   "exchange",
+   "prerequisites",
+   "checklist",
+   "defender",
+   "vbs",
+   "url rewrite"
+  ],
+  "createdAt": 1760600000000,
+  "updatedAt": 1760600000000
+ },
+ {
+  "id": "build-17",
+  "titleHe": "17 · Exchange SE: PrepareSchema, PrepareAD, PrepareDomain",
+  "titleEn": "Exchange SE: PrepareSchema / AD / Domain",
+  "category": "Build",
+  "symptom": "הרחבת סכמת AD והכנת הארגון והדומיין, מ-PowerShell מורם ומקונסולה קלאסית.",
+  "commands": [
+   {
+    "label": "מיפוי ה-ISO (בכל הפעלה מחדש!)",
+    "text": "Mount-DiskImage -ImagePath \"C:\\Users\\admin-shlomi\\Downloads\\ExchangeServerSE-x64.iso\""
+   },
+   {
+    "label": "האם החלון מורם? (חייב True)",
+    "text": "([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)"
+   },
+   {
+    "label": "הרחבת סכמה (תבנית)",
+    "text": ".\\Setup.exe /PrepareSchema /IAcceptExchangeServerLicenseTerms_DiagnosticDataOFF"
+   },
+   {
+    "label": "אימות הסכמה (בדוח: 17003)",
+    "text": "Get-ADObject \"CN=ms-Exch-Schema-Version-Pt,CN=Schema,CN=Configuration,DC=lab,DC=local\" -Property rangeUpper"
+   },
+   {
+    "label": "הכנת הארגון",
+    "text": ".\\Setup.exe /PrepareAD /OrganizationName:\"shlomi-lab\" /IAcceptExchangeServerLicenseTerms_DiagnosticDataOFF"
+   },
+   {
+    "label": "הכנת הדומיין (תבנית)",
+    "text": ".\\Setup.exe /PrepareDomain /IAcceptExchangeServerLicenseTerms_DiagnosticDataOFF"
+   },
+   {
+    "label": "אם ldifde 8224: רישום רשומות DNS מחדש ב-DC2",
+    "text": "nltest /dsregdns"
+   },
+   {
+    "label": "כפיית רפליקציה של הסכמה",
+    "text": "repadmin /replicate DC1.lab.local DC2.lab.local \"CN=Schema,CN=Configuration,DC=lab,DC=local\""
+   },
+   {
+    "label": "בדיקת רפליקציות",
+    "text": "dcdiag /test:replications"
+   }
+  ],
+  "guiSteps": [
+   "לפני הכל: שני ה-DC דולקים. כיבוי DC2 גרם לשגיאת ldifde 8224.",
+   "פתח PowerShell קלאסי (לא Windows Terminal) כמנהל. אחרת Setup קורס מיד עם ArgumentOutOfRangeException.",
+   "ב-Subscription Edition חובה לציין /IAcceptExchangeServerLicenseTerms_DiagnosticDataON או _DiagnosticDataOFF. הדגל הישן לבדו נדחה.",
+   "הרץ מהתיקייה של ה-ISO (cd F:\\), ולא מתיקיית הבית.",
+   "אחרי PrepareAD ו-PrepareDomain: הסר את admin-shlomi מ-Schema Admins ו-Enterprise Admins."
+  ],
+  "ifNotWorking": "ldifde 8224: במעבדה DC2 היה כבוי ואז DNS חסר. הדלק את DC2, הרץ nltest /dsregdns, ואז repadmin /replicate (הפקודות למעלה), ובדוק dcdiag /test:replications.",
+  "notes": "מקור: דוח מעבדת Windows Server 2025 (שיעור 13). פקודות שמסומנות \"תבנית\" הן נוסחה סטנדרטית ולא הועתקו מהדוח. ",
+  "tags": [
+   "מעבדה",
+   "lab",
+   "בניית דומיין",
+   "build",
+   "exchange",
+   "prepareschema",
+   "preparead",
+   "preparedomain",
+   "ldifde",
+   "schema"
+  ],
+  "createdAt": 1760600000000,
+  "updatedAt": 1760600000000
+ },
+ {
+  "id": "build-18",
+  "titleHe": "18 · Exchange SE: התקנת תפקיד Mailbox",
+  "titleEn": "Exchange SE: install Mailbox role",
+  "category": "Build",
+  "symptom": "ההתקנה עצמה, ומה לעשות כשהיא נתקעת.",
+  "commands": [
+   {
+    "label": "התקנה",
+    "text": ".\\Setup.exe /mode:Install /role:Mailbox /IAcceptExchangeServerLicenseTerms_DiagnosticDataOFF"
+   },
+   {
+    "label": "לוג ההתקנה (חמש שורות אחרונות)",
+    "text": "Get-Content C:\\ExchangeSetupLogs\\ExchangeSetup.log -Tail 5"
+   },
+   {
+    "label": "האם Defender סורק בזמן אמת?",
+    "text": "Get-MpComputerStatus | Select RealTimeProtectionEnabled"
+   },
+   {
+    "label": "אחרי ההתקנה: שירותי Exchange",
+    "text": "Get-Service MSExchange* | Select Name,Status"
+   }
+  ],
+  "guiSteps": [
+   "לפני ההתקנה: חריגי Defender, URL Rewrite 2.1, VBS כבוי, ISO ממופה (רשומה 16).",
+   "Setup נעצר על \"IIS URL rewrite module isn't installed\": התקן את URL Rewrite 2.1 (x64) והרץ שוב.",
+   "נתקע על Copying Exchange Files 16% בלי שגיאה (CPU 2%, דיסק 0%): סגור את Setup, הוסף חריגי Defender, הפעל מחדש ומפה את ה-ISO מחדש.",
+   "אחרי ההתקנה בצע הפעלה מחדש כנדרש, ופתח את EAC: https://localhost/ecp."
+  ],
+  "ifNotWorking": "אם הלוג מפסיק ב-\"Installing a new product. Package: ...exchangeserver.msi\": זו נעילת MSI שקטה. חריגי Defender פותרים.",
+  "notes": "מקור: דוח מעבדת Windows Server 2025 (שיעור 13). פקודות שמסומנות \"תבנית\" הן נוסחה סטנדרטית ולא הועתקו מהדוח. ",
+  "tags": [
+   "מעבדה",
+   "lab",
+   "בניית דומיין",
+   "build",
+   "exchange",
+   "install",
+   "mailbox role",
+   "setup",
+   "msi"
+  ],
+  "createdAt": 1760600000000,
+  "updatedAt": 1760600000000
+ },
+ {
+  "id": "build-19",
+  "titleHe": "19 · Exchange: אחרי ההתקנה (EMS, דומיין מייל, כתובות)",
+  "titleEn": "Exchange post-install: EMS, accepted domain, addresses",
+  "category": "Build",
+  "symptom": "חיבור ל-EMS, בדיקת בריאות, הוספת דומיין קבלה אמיתי, ועקיפה של Email Address Policy שלא עובד בסביבה.",
+  "commands": [
+   {
+    "label": "טעינת EMS (בכל session חדש)",
+    "text": ". 'C:\\Program Files\\Microsoft\\Exchange Server\\V15\\bin\\RemoteExchange.ps1'\nConnect-ExchangeServer -auto"
+   },
+   {
+    "label": "בריאות שירותים",
+    "text": "Test-ServiceHealth"
+   },
+   {
+    "label": "תיבה למשתמש קיים",
+    "text": "Enable-Mailbox -Identity \"admin-shlomi\""
+   },
+   {
+    "label": "תיבת בדיקה (תבנית)",
+    "text": "New-Mailbox -Name \"shlomi-lab-test\" -UserPrincipalName shlomi-lab-test@lab.local -Password (Read-Host -AsSecureString \"Password\")"
+   },
+   {
+    "label": "דומיין קבלה",
+    "text": "New-AcceptedDomain -Name \"corp.example.com\" -DomainName \"corp.example.com\" -DomainType Authoritative"
+   },
+   {
+    "label": "כתובת ראשית ידנית (עוקף Email Address Policy)",
+    "text": "Set-Mailbox -Identity \"shlomi-lab-test\" -EmailAddresses @{add=\"test@corp.example.com\"}\nSet-Mailbox -Identity \"shlomi-lab-test\" -PrimarySmtpAddress \"test@corp.example.com\""
+   },
+   {
+    "label": "בדיקת שליחה (תבנית)",
+    "text": "Send-MailMessage -From \"admin-shlomi@corp.example.com\" -To \"test@corp.example.com\" -Subject \"test\" -Body \"hello\" -SmtpServer MAIL1"
+   },
+   {
+    "label": "חכה 5 שניות ובדוק Inbox",
+    "text": "Start-Sleep -Seconds 5; Get-MailboxFolderStatistics -Identity \"shlomi-lab-test\" -FolderScope Inbox | Select Name,ItemsInFolder"
+   },
+   {
+    "label": "מעקב הודעה",
+    "text": "Get-MessageTrackingLog -Sender \"admin-shlomi@corp.example.com\" -Start (Get-Date).AddHours(-1) | Select Timestamp,EventId,Source"
+   }
+  ],
+  "guiSteps": [
+   "cmdlets של Exchange זמינים רק ב-EMS (או אחרי טעינת RemoteExchange.ps1). ב-PowerShell רגיל הם לא קיימים.",
+   "EAC: https://localhost/ecp (אזהרת תעודה צפויה כי ה-CA הפנימי לא הופץ ללקוחות).",
+   "שרשרת תקינה של הודעה במעקב: RECEIVE ← AGENTINFO ← SEND ← DELIVER.",
+   "Update-EmailAddressPolicy נכשל במעבדה על כל הנמענים (ManagementObjectNotFoundException) בלי סיבת תשתית. הפתרון: Set-Mailbox ישיר.",
+   "אזהרת \"no settings have been modified\" בהרצת שני Set-Mailbox ברצף היא קוסמטית, והשינוי נקלט."
+  ],
+  "ifNotWorking": "אם נראה שהפקודה לא פעלה, חכה כמה שניות ובדוק שוב (Get-Mailbox | Select PrimarySmtpAddress,EmailAddresses).",
+  "notes": "מקור: דוח מעבדת Windows Server 2025 (שיעור 13). פקודות שמסומנות \"תבנית\" הן נוסחה סטנדרטית ולא הועתקו מהדוח. דומיין המייל בדוח הוא placeholder (corp.example.com).",
+  "tags": [
+   "מעבדה",
+   "lab",
+   "בניית דומיין",
+   "build",
+   "exchange",
+   "ems",
+   "accepted domain",
+   "mailbox",
+   "email address policy"
+  ],
+  "createdAt": 1760600000000,
+  "updatedAt": 1760600000000
+ },
+ {
+  "id": "build-20",
+  "titleHe": "20 · Exchange: פקודות EMS ליום-יום",
+  "titleEn": "Exchange: daily EMS commands",
+  "category": "Build",
+  "symptom": "טבלת עזר לניהול תיבות, קבוצות תפוצה, תורים, מסדי נתונים ומחברים. קודם טען EMS (רשומה 19).",
+  "commands": [
+   {
+    "label": "כל התיבות",
+    "text": "Get-Mailbox"
+   },
+   {
+    "label": "סטטיסטיקה לתיבה",
+    "text": "Get-MailboxStatistics -Identity \"name\""
+   },
+   {
+    "label": "הודעות ב-Inbox",
+    "text": "Get-MailboxFolderStatistics -Identity \"name\" -FolderScope Inbox"
+   },
+   {
+    "label": "מכסת שליחה",
+    "text": "Set-Mailbox -Identity \"name\" -ProhibitSendQuota 2GB"
+   },
+   {
+    "label": "ניתוק תיבה (ניתן לשחזור)",
+    "text": "Disable-Mailbox -Identity \"name\""
+   },
+   {
+    "label": "מחיקה לצמיתות (זהירות! מוחק גם את משתמש ה-AD)",
+    "text": "Remove-Mailbox -Identity \"name\""
+   },
+   {
+    "label": "קבוצת תפוצה",
+    "text": "New-DistributionGroup -Name \"group\" -Members \"user1\",\"user2\""
+   },
+   {
+    "label": "חברים בקבוצה",
+    "text": "Get-DistributionGroupMember -Identity \"group\""
+   },
+   {
+    "label": "תורי Transport",
+    "text": "Get-Queue"
+   },
+   {
+    "label": "הודעות תקועות בתור",
+    "text": "Get-Message -Queue \"MAIL1\\3\""
+   },
+   {
+    "label": "ניסיון חוזר לתור",
+    "text": "Retry-Queue -Identity \"MAIL1\\3\""
+   },
+   {
+    "label": "מעקב לפי שולח ונמען",
+    "text": "Get-MessageTrackingLog -Sender \"a@lab.local\" -Recipients \"b@lab.local\" -Start (Get-Date).AddHours(-1)"
+   },
+   {
+    "label": "מסדי נתונים",
+    "text": "Get-MailboxDatabase -Status"
+   },
+   {
+    "label": "מחבר שליחה",
+    "text": "Get-SendConnector"
+   },
+   {
+    "label": "מחבר קבלה",
+    "text": "Get-ReceiveConnector"
+   },
+   {
+    "label": "בדיקת זרימת דואר",
+    "text": "Test-MailFlow"
+   },
+   {
+    "label": "תעודות",
+    "text": "Get-ExchangeCertificate"
+   },
+   {
+    "label": "מי באיזה תפקיד ניהול",
+    "text": "Get-ManagementRoleAssignment -RoleAssignee \"admin-shlomi\""
+   },
+   {
+    "label": "חברי Organization Management",
+    "text": "Get-RoleGroupMember \"Organization Management\""
+   },
+   {
+    "label": "ייצוא לקובץ",
+    "text": "Get-Mailbox | Export-Csv C:\\mailboxes.csv -NoTypeInformation"
+   }
+  ],
+  "guiSteps": [
+   "טען EMS: \". C:\\Program Files\\Microsoft\\Exchange Server\\V15\\bin\\RemoteExchange.ps1\" ואז Connect-ExchangeServer -auto.",
+   "לכל cmdlet: Get-Help <cmdlet> -Examples. הוסף | Format-List כדי לראות את כל השדות."
+  ],
+  "ifNotWorking": "",
+  "notes": "מקור: דוח מעבדת Windows Server 2025 (שיעור נספח EMS). ",
+  "tags": [
+   "מעבדה",
+   "lab",
+   "בניית דומיין",
+   "build",
+   "exchange",
+   "ems",
+   "mailbox",
+   "queue",
+   "message tracking"
+  ],
+  "createdAt": 1760600000000,
+  "updatedAt": 1760600000000
+ },
+ {
+  "id": "build-21",
+  "titleHe": "21 · קטלוג תקלות מהבנייה: תסמין ← פתרון",
+  "titleEn": "Build troubleshooting catalog",
+  "category": "Build",
+  "symptom": "כל התקלות האמיתיות שנתקלת בהן במעבדה, בקיצור, לפי סדר ההקמה.",
+  "commands": [
+   {
+    "label": "פרופיל רשת ו-ping",
+    "text": "Set-NetConnectionProfile -NetworkCategory Private; Enable-NetFirewallRule -DisplayName \"*Echo Request*\""
+   },
+   {
+    "label": "SQL תקוע ב-Single User",
+    "text": "Restart-Service MSSQLSERVER -Force"
+   },
+   {
+    "label": "DC: רשומות DNS חסרות",
+    "text": "nltest /dsregdns"
+   },
+   {
+    "label": "Netlogon ורישום",
+    "text": "Restart-Service Netlogon -Force; ipconfig /registerdns"
+   }
+  ],
+  "guiSteps": [
+   "Ping בין שרתים נכשל ← פרופיל Public ו-Echo Request כבוי ← Private והפעלת הכלל.",
+   "Install-ADDSForest נכשל על סיסמה ← net user Administrator * (ב-VMware Easy Install השדה ריק).",
+   "New-RDSessionDeployment נכשל על PowerShell remoting ← Loopback Check, והתחברות כמשתמש דומיין ולא מנהל מקומי.",
+   "Name Not Found בהוספת Staff ל-Collection ← זה OU ולא קבוצת אבטחה. צור קבוצה.",
+   "RDP נחסם למנהל ← הוסף את IT-Admins ל-UserGroup של ה-Collection.",
+   "SQL Setup נכשל (9001, msdb) ו-\"single user mode\" ← Restart-Service MSSQLSERVER -Force.",
+   "Certificate types are not available ← gpupdate /force והמתנה, אז בקש שוב.",
+   "Name Not Found בהרשאת מפתח פרטי ← NT SERVICE\\MSSQLSERVER בפורמט מלא ובמיקום המחשב המקומי.",
+   "SQL לא עלה אחרי TLS ← Restart-Service שוב (הצליח בניסיון השני).",
+   "dcdiag נכשל ב-DC2 (SRV חסרים, 1988) ← פרופיל Public ל-Private + Netlogon + registerdns.",
+   "Join נכשל \"user name or password is incorrect\" ← בדוק הקלדה, אמת שהחשבון לא נעול.",
+   "Internal ב-VPN1 חזר ל-DHCP אחרי Join ← כבה DHCP והגדר סטטי מחדש.",
+   "טווח VPN הראה Number 277 ← טעות באוקטט האחרון, מחק והזן מחדש (צריך 21).",
+   "certreq -submit RPC server unavailable ← הרצה כמשתמש מקומי, התחבר כמשתמש דומיין.",
+   "IP Address Conflict (Duplicate, נפילה ל-APIPA) על .174 ← arp ממכונה אחרת הראה MAC של VMware אחר; הוקצתה כתובת חלופית (.180). DefaultGateway already exists ← ה-Gateway שייך לממשק, אז הוסף כתובת חדשה בלי לציין Gateway שוב.",
+   "Web-Lgcy-Mgmt-Console לא קיים ← הרשימה המתוקנת לשרת 2025 ברשומה 16.",
+   "Exchange Setup קורס מיד ← קונסולה קלאסית ולא Windows Terminal.",
+   "לולאת קריסה Hypervisor launch failed ← כיבוי hypervisorlaunchtype ו-VBS.",
+   "UAC מבקש סיסמה ← הוסף כ-Local Administrator, והתחבר מחדש.",
+   "ldifde 8224 ← DC2 כבוי או _msdcs חסר ← nltest /dsregdns ו-repadmin /replicate.",
+   "הדגל הישן לא מספיק ← _DiagnosticDataOFF/ON.",
+   "Mount-DiskImage 0x80070522 ← PowerShell לא מורם (Run as administrator).",
+   "Prerequisite: URL Rewrite חסר ← התקן 2.1 x64.",
+   "תקוע על 16% ← חריגי Defender.",
+   "Update-EmailAddressPolicy נכשל ← Set-Mailbox -EmailAddresses / -PrimarySmtpAddress."
+  ],
+  "ifNotWorking": "",
+  "notes": "מקור: דוח מעבדת Windows Server 2025 (שיעור 1-13). ",
+  "tags": [
+   "מעבדה",
+   "lab",
+   "בניית דומיין",
+   "build",
+   "troubleshooting",
+   "תקלות",
+   "catalog",
+   "errors"
+  ],
+  "createdAt": 1760600000000,
+  "updatedAt": 1760600000000
  }
 ];
