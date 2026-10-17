@@ -11,6 +11,9 @@
     { key: 'Network', he: 'רשת', en: 'Network', icon: '📡', color: '#34d399' },
     { key: 'Printers', he: 'מדפסות', en: 'Printers', icon: '🖨️', color: '#fb923c' },
     { key: 'System', he: 'מערכת', en: 'System', icon: '⚙️', color: '#f472b6' },
+    { key: 'VPN', he: 'VPN', en: 'VPN (RRAS / SSTP / NPS)', icon: '🛡️', color: '#38bdf8' },
+    { key: 'Firewall', he: 'חומת אש', en: 'Firewall (Check Point)', icon: '🧱', color: '#f87171' },
+    { key: 'Backup', he: 'גיבוי', en: 'Backup (Veeam)', icon: '💾', color: '#c084fc' },
     { key: 'Build', he: 'בניית דומיין', en: 'Build a domain (lab)', icon: '🏗️', color: '#a3e635' },
     { key: 'Win+R', he: 'קיצורי Win+R', en: 'Run commands', icon: '⌨️', color: '#94a3b8' }
   ];
@@ -482,8 +485,8 @@
   var WHERE_CATS = {
     account: ['AD', 'GPO'],
     workstation: ['System', 'Printers', 'Network', 'AD'],
-    network: ['Network', 'DNS/DC'],
-    server: ['Remote Access', 'DNS/DC', 'AD', 'System', 'GPO']
+    network: ['Network', 'DNS/DC', 'VPN', 'Firewall'],
+    server: ['Remote Access', 'DNS/DC', 'AD', 'System', 'GPO', 'VPN', 'Firewall', 'Backup']
   };
   var CHANGE_WORDS = {
     password: ['password', 'סיסמה', 'lockout', 'נעילה', 'kerberos'],

@@ -1,6 +1,6 @@
 /* Seed data for the helpdesk toolkit. Imported once into IndexedDB. */
-window.SEED_VERSION = 3;
-window.SEED_ADDED = {"2": ["build-00", "build-01", "build-02", "build-03", "build-04", "build-05", "build-06", "build-07", "build-08", "build-09", "build-10", "build-11", "build-12", "build-13", "build-14", "build-15", "build-16", "build-17", "build-18", "build-19", "build-20", "build-21"], "3": ["ra-rdp-orphan-session"]};
+window.SEED_VERSION = 4;
+window.SEED_ADDED = {"2": ["build-00", "build-01", "build-02", "build-03", "build-04", "build-05", "build-06", "build-07", "build-08", "build-09", "build-10", "build-11", "build-12", "build-13", "build-14", "build-15", "build-16", "build-17", "build-18", "build-19", "build-20", "build-21"], "3": ["ra-rdp-orphan-session"], "4": ["ad-repl-8524", "ad-script-prepare-dc", "ad-script-join-domain", "ad-script-fix-locked", "gpo-share-drive-map", "gpo-ts-lockdown", "ra-rdp-group-access", "ra-duo-mfa-rdp", "vpn-sstp-rras-nps-setup", "vpn-0x80092013", "vpn-terminated-20271", "vpn-nps-invalid-client-13", "vpn-reason-66-eap", "vpn-nps-reason-codes", "vpn-stale-hosts-dns", "vpn-restart-dependent-timedout", "vpn-no-connection-checklist", "veeam-install-job", "veeam-restore-warnings", "cp-install-interfaces", "cp-policy-rules", "cp-read-logs", "cp-dmz-nat-portforward", "servers-behind-firewall"]};
 window.SEED_ENTRIES = [
  {
   "id": "ad-lockout",
@@ -4641,6 +4641,1055 @@ window.SEED_ENTRIES = [
    "winlogon",
    "duo",
    "ts1"
+  ],
+  "createdAt": 1760600000000,
+  "updatedAt": 1760600000000
+ },
+ {
+  "id": "ad-repl-8524",
+  "titleHe": "שגיאת שכפול 8524 (כשל DNS) ו-1256",
+  "titleEn": "AD replication errors 8524 and 1256",
+  "category": "AD",
+  "symptom": "repadmin /replsummary מציג כשלונות ו-/showrepl מציג 8524: \"The DSA operation is unable to proceed because of a DNS lookup failure\". שינוי משתמש או סיסמה בבקר אחד לא מופיע בשני, ולעיתים חוזר אחרי הפעלה מחדש של בקר. חומרה בינונית.",
+  "commands": [
+   {
+    "label": "אבחון: סיכום שכפול",
+    "text": "repadmin /replsummary"
+   },
+   {
+    "label": "אבחון: פירוט ושגיאות",
+    "text": "repadmin /showrepl"
+   },
+   {
+    "label": "אבחון DNS על הבקר הבעייתי",
+    "text": "dcdiag /test:dns /v"
+   },
+   {
+    "label": "סדר שרתי ה-DNS בכרטיס",
+    "text": "Get-DnsClientServerAddress -InterfaceAlias \"<NIC>\""
+   },
+   {
+    "label": "פתרון על הבקר הבעייתי: רישום DNS מחדש",
+    "text": "ipconfig /registerdns\nnltest /dsregdns\nRestart-Service netlogon"
+   },
+   {
+    "label": "אחר כך על הבקר השני (מצפים ל-0 כשלונות)",
+    "text": "repadmin /syncall /Ade\nrepadmin /replsummary"
+   },
+   {
+    "label": "מניעה בבקר משני: הבקר השותף ראשון, 127.0.0.1 אחרון",
+    "text": "Set-DnsClientServerAddress -InterfaceAlias \"<NIC>\" -ServerAddresses <DC-PARTNER-IP>,127.0.0.1"
+   },
+   {
+    "label": "שגיאה 1256: בדיקת קישוריות בין הבקרים",
+    "text": "Test-NetConnection <DC-IP> -Port 389"
+   }
+  ],
+  "guiSteps": [
+   "dssite.msc ← Sites ← Servers ← NTDS Settings ← קליק ימני על חיבור ← Replicate Now.",
+   "dnsmgmt.msc ← לבדוק שרשומות _msdcs של הבקר קיימות.",
+   "שגיאה 1256 (הבקר השני לא זמין): לשחזר קישוריות, אחר כך repadmin /syncall /Ade. אחרי שינוי רשת או חומה לוודא שהפורטים של AD פתוחים בין הבקרים: DNS, Kerberos, LDAP, SMB, RPC."
+  ],
+  "ifNotWorking": "אם 8524 נשארת: dcdiag /test:dns /v, ובדוק שאזור _msdcs קיים ומתעדכן ושסדר ה-DNS בכרטיס נכון.",
+  "notes": "מקור: חבילת הפרקים הכללית, פרק 01. מחליפים <PLACEHOLDERS> בערכי הסביבה שלך. 8524 כמעט תמיד DNS ולא השכפול עצמו. סדר הטיפול: DNS ← רישום ← syncall ← אימות. כדאי לשמור צילום של replsummary לפני ואחרי. סיבות נפוצות: הבקר לא רשם את הרשומות שלו (במיוחד אחרי הפעלה), 127.0.0.1 ראשון בבקר משני, אזור _msdcs חסר.",
+  "tags": [
+   "replication",
+   "שכפול",
+   "8524",
+   "1256",
+   "repadmin",
+   "dns",
+   "dcdiag",
+   "netlogon",
+   "הדרכה",
+   "general"
+  ],
+  "createdAt": 1760600000000,
+  "updatedAt": 1760600000000
+ },
+ {
+  "id": "ad-script-prepare-dc",
+  "titleHe": "סקריפט: יצירת OU ומשתמש תרגול ב-DC",
+  "titleEn": "Script: create practice OUs and user on a DC",
+  "category": "AD",
+  "symptom": "הכנת סביבת תרגול על בקר דומיין: OU חדשים ומשתמש רגיל (לא אדמין), בלי לכתוב מחדש פעמיים. הסקריפט בודק אם קיים לפני יצירה. מריצים על DC.",
+  "commands": [
+   {
+    "label": "הפעלה (ברירת מחדל: OU בשם LabUsers ו-LabComputers)",
+    "text": ".\\AD-00-Prepare-DC.ps1 -UserName jdoe"
+   },
+   {
+    "label": "הפעלה עם OU בשמות אחרים",
+    "text": ".\\AD-00-Prepare-DC.ps1 -UserName jdoe -OuNames 'PracticeUsers','PracticeComputers' -UserOu 'PracticeUsers'"
+   },
+   {
+    "label": "הסקריפט המלא",
+    "text": "#Requires -Modules ActiveDirectory\nparam(\n    [Parameter(Mandatory)][string]$UserName,\n    [string[]]$OuNames = @('LabUsers', 'LabComputers'),\n    [string]$UserOu = 'LabUsers'\n)\n\n$domain   = Get-ADDomain\n$domainDN = $domain.DistinguishedName\n\nforeach ($ou in $OuNames) {\n    if (-not (Get-ADOrganizationalUnit -Filter \"Name -eq '$ou'\" -SearchBase $domainDN -SearchScope OneLevel)) {\n        New-ADOrganizationalUnit -Name $ou -Path $domainDN -ProtectedFromAccidentalDeletion $true\n        Write-Host \"Created OU: $ou\" -ForegroundColor Green\n    }\n}\n\nif (-not (Get-ADUser -Filter \"SamAccountName -eq '$UserName'\")) {\n    New-ADUser -Name $UserName -GivenName $UserName -SamAccountName $UserName `\n        -UserPrincipalName \"$UserName@$($domain.DNSRoot)\" `\n        -Path \"OU=$UserOu,$domainDN\" `\n        -AccountPassword (Read-Host \"Password for $UserName\" -AsSecureString) `\n        -Enabled $true -PasswordNeverExpires $false\n    Write-Host \"Created user: $UserName\" -ForegroundColor Green\n} else { Write-Host \"User $UserName already exists.\" -ForegroundColor Yellow }\n\nWrite-Host \"`nIf clients must reach the internet while using this DC as DNS, make sure the DC has a DNS forwarder:\"\nWrite-Host \"  Add-DnsServerForwarder -IPAddress <PUBLIC-DNS-IP>\""
+   },
+   {
+    "label": "Forwarder ב-DNS של ה-DC (כדי שלקוחות יגיעו לאינטרנט)",
+    "text": "Add-DnsServerForwarder -IPAddress <PUBLIC-DNS-IP>"
+   }
+  ],
+  "guiSteps": [
+   "dsa.msc ← קליק ימני על הדומיין ← New ← Organizational Unit.",
+   "משתמש: קליק ימני על ה-OU ← New ← User."
+  ],
+  "ifNotWorking": "",
+  "notes": "מקור: חבילת הפרקים הכללית, פרק סקריפט AD-00-Prepare-DC.ps1. מחליפים <PLACEHOLDERS> בערכי הסביבה שלך. הסיסמה נשאלת בהרצה ולא נשמרת בקובץ.",
+  "tags": [
+   "script",
+   "סקריפט",
+   "ou",
+   "new-aduser",
+   "prepare",
+   "הדרכה",
+   "general"
+  ],
+  "createdAt": 1760600000000,
+  "updatedAt": 1760600000000
+ },
+ {
+  "id": "ad-script-join-domain",
+  "titleHe": "סקריפט: הצטרפות תחנה לדומיין (עם בדיקות)",
+  "titleEn": "Script: join a workstation to the domain",
+  "category": "AD",
+  "symptom": "לפני Add-Computer: בדיקת מהדורת Windows (Home לא מצטרף), נקודת שחזור, DNS לבקר ובדיקות LDAP. מריצים על התחנה כמנהל.",
+  "commands": [
+   {
+    "label": "הפעלה",
+    "text": ".\\AD-00-Join-Domain.ps1 -DomainName <DOMAIN-FQDN> -DcIp <DC-IP>"
+   },
+   {
+    "label": "עם OU למחשבים",
+    "text": ".\\AD-00-Join-Domain.ps1 -DomainName <DOMAIN-FQDN> -DcIp <DC-IP> -ComputerOU \"OU=<COMPUTERS-OU>,DC=<domain>,DC=<tld>\""
+   },
+   {
+    "label": "הסקריפט המלא",
+    "text": "#Requires -RunAsAdministrator\nparam(\n    [Parameter(Mandatory)][string]$DomainName,\n    [Parameter(Mandatory)][string]$DcIp,\n    [string]$ComputerOU\n)\n\n$edition = (Get-CimInstance Win32_OperatingSystem).Caption\nWrite-Host \"OS: $edition\"\nif ($edition -match 'Home') { throw \"Windows Home cannot join a domain. Upgrade to Pro first.\" }\n\nGet-LocalGroupMember Administrators | Format-Table Name, ObjectClass -AutoSize\n\ntry {\n    Enable-ComputerRestore -Drive \"$env:SystemDrive\\\"\n    Checkpoint-Computer -Description \"Before domain join\" -RestorePointType MODIFY_SETTINGS\n    Write-Host \"Restore point created.\" -ForegroundColor Green\n} catch { Write-Warning \"Restore point failed: $($_.Exception.Message)\" }\n\n$nic = Get-NetAdapter | Where-Object Status -eq 'Up' | Select-Object -First 1\nSet-DnsClientServerAddress -InterfaceIndex $nic.ifIndex -ServerAddresses $DcIp\nClear-DnsClientCache\n\nif (-not (Resolve-DnsName $DomainName -ErrorAction SilentlyContinue)) { throw \"Cannot resolve $DomainName via $DcIp\" }\nif (-not (Test-NetConnection $DcIp -Port 389 -InformationLevel Quiet)) { throw \"LDAP port 389 on $DcIp unreachable\" }\n\n$params = @{ DomainName = $DomainName; Credential = (Get-Credential -Message \"Domain admin\"); Force = $true }\nif ($ComputerOU) { $params.OUPath = $ComputerOU }\nAdd-Computer @params\nWrite-Host \"Joined. Restarting in 10 seconds...\" -ForegroundColor Green\nStart-Sleep 10; Restart-Computer"
+   }
+  ],
+  "guiSteps": [
+   "sysdm.cpl ← Change ← Member of: Domain ← שם הדומיין ← פרטי מנהל דומיין.",
+   "לפני כן: ncpa.cpl ← IPv4 ← DNS מצביע לבקר הדומיין.",
+   "אחרי אתחול: כניסה כ-DOMAIN\\user."
+  ],
+  "ifNotWorking": "אם \"Cannot resolve\": ה-DNS של התחנה לא מצביע לבקר, או שהבקר לא נגיש (LDAP 389).",
+  "notes": "מקור: חבילת הפרקים הכללית, פרק סקריפט AD-00-Join-Domain.ps1. מחליפים <PLACEHOLDERS> בערכי הסביבה שלך. חשבונות מקומיים קיימים לא נפגעים. מוודאים לפני ההצטרפות שיש אדמין מקומי כדרך חזרה.",
+  "tags": [
+   "script",
+   "סקריפט",
+   "join",
+   "add-computer",
+   "domain join",
+   "הצטרפות",
+   "הדרכה",
+   "general"
+  ],
+  "createdAt": 1760600000000,
+  "updatedAt": 1760600000000
+ },
+ {
+  "id": "ad-script-fix-locked",
+  "titleHe": "סקריפט: אבחון ופתיחת חשבון נעול",
+  "titleEn": "Script: diagnose and unlock a locked account",
+  "category": "AD",
+  "symptom": "סקריפט שמראה את מצב החשבון, מוצא את מקור הנעילה (אירוע 4740 ב-PDC), פותח, ואופציונלית מאפס סיסמה עם החלפה בכניסה הבאה.",
+  "commands": [
+   {
+    "label": "הפעלה",
+    "text": ".\\AD-01-Fix-LockedAccount.ps1 -User jdoe"
+   },
+   {
+    "label": "עם איפוס סיסמה",
+    "text": ".\\AD-01-Fix-LockedAccount.ps1 -User jdoe -ResetPassword"
+   },
+   {
+    "label": "הסקריפט המלא",
+    "text": "#Requires -Modules ActiveDirectory\nparam(\n    [Parameter(Mandatory)][string]$User,\n    [switch]$ResetPassword\n)\n\n$u = Get-ADUser $User -Properties LockedOut, PasswordExpired, PasswordLastSet, BadLogonCount, LastBadPasswordAttempt, Enabled\n$u | Select-Object Name, Enabled, LockedOut, PasswordExpired, PasswordLastSet, BadLogonCount, LastBadPasswordAttempt | Format-List\n\n$pdc = (Get-ADDomain).PDCEmulator\nWrite-Host \"`nLockout events on $pdc :\" -ForegroundColor Cyan\ntry {\n    Get-WinEvent -ComputerName $pdc -FilterHashtable @{LogName='Security'; Id=4740} -MaxEvents 50 -ErrorAction Stop |\n        Where-Object { $_.Properties[0].Value -eq $User } |\n        Select-Object -First 5 TimeCreated, @{n='CallerComputer';e={$_.Properties[1].Value}} |\n        Format-Table -AutoSize\n} catch { Write-Warning \"Could not read Security log: $($_.Exception.Message)\" }\n\nif ($u.LockedOut) {\n    Unlock-ADAccount -Identity $User\n    Write-Host \"Account unlocked.\" -ForegroundColor Green\n} else {\n    Write-Host \"Account is not locked.\" -ForegroundColor Yellow\n}\n\nif ($ResetPassword) {\n    $pw = Read-Host \"New password\" -AsSecureString\n    Set-ADAccountPassword -Identity $User -Reset -NewPassword $pw\n    Set-ADUser -Identity $User -ChangePasswordAtLogon $true\n    Write-Host \"Password reset; must change at next logon.\" -ForegroundColor Green\n}"
+   },
+   {
+    "label": "בלי סקריפט: כל החשבונות הנעולים",
+    "text": "Search-ADAccount -LockedOut | ft Name, SamAccountName"
+   }
+  ],
+  "guiSteps": [
+   "dsa.msc ← המשתמש ← Account ← Unlock account.",
+   "מדיניות הנעילה: Default Domain Policy ← Computer Configuration ← Policies ← Windows Settings ← Security Settings ← Account Policies ← Account Lockout Policy."
+  ],
+  "ifNotWorking": "נעילה חוזרת: מצא את Caller Computer Name באירוע 4740 וטפל במקור (כונן ממופה, משימה מתוזמנת, טלפון, סשן RDP ישן, VPN שמור עם סיסמה ישנה).",
+  "notes": "מקור: חבילת הפרקים הכללית, פרק 02 + AD-01. מחליפים <PLACEHOLDERS> בערכי הסביבה שלך. כלל מרכזי: קודם מוצאים את המקור ורק אחר כך פותחים. לצלם את אירוע 4740 עם שם המכונה.",
+  "tags": [
+   "script",
+   "lockout",
+   "נעול",
+   "נעילה",
+   "4740",
+   "unlock",
+   "pdc",
+   "הדרכה",
+   "general"
+  ],
+  "createdAt": 1760600000000,
+  "updatedAt": 1760600000000
+ },
+ {
+  "id": "gpo-share-drive-map",
+  "titleHe": "הרשאות משותף ומיפוי כונן ב-GPO",
+  "titleEn": "Shared folder permissions via groups and GPP drive mapping",
+  "category": "GPO",
+  "symptom": "משתמש צריך גישה לתיקייה משותפת ולכונן ממופה אוטומטית. העיקרון: הרשאות לקבוצות, מיפוי עם Item-level targeting לפי הקבוצה.",
+  "commands": [
+   {
+    "label": "קבוצה והוספת משתמש",
+    "text": "New-ADGroup -Name \"<GROUP-RW>\" -GroupScope Global -Path \"<OU-DN>\"\nAdd-ADGroupMember -Identity \"<GROUP-RW>\" -Members <USER>"
+   },
+   {
+    "label": "בשרת הקבצים: הרשאות Share",
+    "text": "Get-SmbShareAccess -Name \"<SHARE>\""
+   },
+   {
+    "label": "בשרת הקבצים: הרשאות NTFS",
+    "text": "icacls \"<LOCAL-PATH>\""
+   },
+   {
+    "label": "אימות אצל המשתמש",
+    "text": "gpupdate /force\ngpresult /r\nwhoami /groups | findstr <GROUP-RW>\nnet use"
+   },
+   {
+    "label": "חיפוש נתב GPO מלא",
+    "text": "gpresult /h report.html"
+   }
+  ],
+  "guiSteps": [
+   "gpmc.msc ← צור GPO (למשל Map-<LETTER>-Drive) וקשר ל-OU של המשתמשים.",
+   "User Configuration ← Preferences ← Windows Settings ← Drive Maps ← New ← Mapped Drive.",
+   "Location: \\\\<FILE-SERVER>\\<SHARE>, Drive Letter: <LETTER>:.",
+   "לשונית Common ← Item-level targeting ← Targeting ← New Item ← Security Group ← <GROUP-RW>.",
+   "ההרשאה האפקטיבית היא המגבילה מבין Share ו-NTFS. בדרך כלל Share פתוח לקבוצות והבקרה ב-NTFS.",
+   "בדיקת טירגוט: להסיר את המשתמש מהקבוצה, Sign out/in, ולוודא שהכונן נעלם."
+  ],
+  "ifNotWorking": "כונן נשאר אחרי הסרה מקבוצה: טוקן ישן או Action=Create. Sign out/in, ובמיפוי להשתמש ב-Update/Replace.",
+  "notes": "מקור: חבילת הפרקים הכללית, פרק 03. מחליפים <PLACEHOLDERS> בערכי הסביבה שלך. חברות בקבוצה נכנסת לטוקן רק בכניסה חדשה (Sign out/in). תקלות: כונן לא מופיע ← משתמש לא בקבוצה או טוקן ישן; מופיע אבל גישה נדחית ← הרשאות Share/NTFS; ה-GPO לא ב-gpresult ← קישור ל-OU שגוי או Security Filtering.",
+  "tags": [
+   "drive map",
+   "מיפוי כונן",
+   "share",
+   "ntfs",
+   "permissions",
+   "הרשאות",
+   "gpp",
+   "item-level targeting",
+   "הדרכה",
+   "general"
+  ],
+  "createdAt": 1760600000000,
+  "updatedAt": 1760600000000
+ },
+ {
+  "id": "gpo-ts-lockdown",
+  "titleHe": "הקשחת Terminal Server ב-GPO (Loopback)",
+  "titleEn": "Terminal Server lockdown with GPO (loopback)",
+  "category": "GPO",
+  "symptom": "משתמש רגיל ב-Terminal Server מקבל סביבה מוגבלת (בלי Control Panel, שורת פקודה, PowerShell, רגדיט וכונן המערכת) ומנהלים לא מושפעים.",
+  "commands": [
+   {
+    "label": "החלה ובדיקה",
+    "text": "gpupdate /force\ngpresult /r /scope:user"
+   }
+  ],
+  "guiSteps": [
+   "מבנה: GPO בשם TS-Lockdown מקושר ל-OU של שרתי ה-Terminal (אובייקטי מחשב).",
+   "Loopback: Computer Configuration ← Administrative Templates ← System ← Group Policy ← Configure user Group Policy loopback processing mode ← Enabled, Mode: Merge. הסיבה: ההגבלות הן הגדרות משתמש, וה-GPO מקושר ל-OU של מחשבים.",
+   "User Configuration ← Policies ← Administrative Templates: Control Panel ← Prohibit access to Control Panel and PC settings.",
+   "System ← Prevent access to the command prompt (Disable script processing: No).",
+   "System ← Don't run specified Windows applications: powershell.exe, powershell_ise.exe, pwsh.exe, wt.exe, ServerManager.exe.",
+   "System ← Prevent access to registry editing tools.",
+   "Windows Components ← File Explorer ← Hide these specified drives in My Computer + Prevent access to drives from My Computer.",
+   "Start Menu and Taskbar ← Remove Run menu from Start Menu.",
+   "החרגת מנהלים: gpmc.msc ← ה-GPO ← Delegation ← Advanced ← Add קבוצות מנהלים ← Deny על Apply group policy.",
+   "אימות: משתמש רגיל נחסם ב-Control Panel וב-PowerShell, מנהל פועל חופשי."
+  ],
+  "ifNotWorking": "ההגבלות לא חלות: חסר Loopback, או שה-GPO לא מקושר ל-OU של השרת. גם מנהל מוגבל: ה-Deny לא הוגדר. שינוי לא נקלט: Sign out/in (מדיניות משתמש נטענת בכניסה).",
+  "notes": "מקור: חבילת הפרקים הכללית, פרק 04. מחליפים <PLACEHOLDERS> בערכי הסביבה שלך. לבדוק תמיד גם עם מנהל כדי לא לנעול את עצמך מחוץ לשרת. חסימה ב-GPO היא שכבה אחת ולא תחליף להרשאות NTFS והקשחת השרת. אם שם הגדרה שונה בגרסה שלך, חפש בשורת החיפוש של העורך.",
+  "tags": [
+   "terminal server",
+   "lockdown",
+   "loopback",
+   "הקשחה",
+   "rds",
+   "gpo",
+   "restrictions",
+   "הדרכה",
+   "general"
+  ],
+  "createdAt": 1760600000000,
+  "updatedAt": 1760600000000
+ },
+ {
+  "id": "ra-rdp-group-access",
+  "titleHe": "מתן גישת RDP לקבוצה (Remote Desktop Users)",
+  "titleEn": "Grant RDP access to a server for a domain group",
+  "category": "Remote Access",
+  "symptom": "משתמש צריך להתחבר בשולחן עבודה מרוחק לשרת. לא מוסיפים משתמשים אחד אחד: קבוצת דומיין שמוספת ל-Remote Desktop Users המקומית בשרת.",
+  "commands": [
+   {
+    "label": "בבקר הדומיין",
+    "text": "New-ADGroup -Name \"<GROUP>\" -GroupScope Global -Path \"<OU-DN>\"\nAdd-ADGroupMember -Identity \"<GROUP>\" -Members <USER>"
+   },
+   {
+    "label": "בשרת היעד",
+    "text": "Add-LocalGroupMember -Group \"Remote Desktop Users\" -Member \"<DOMAIN>\\<GROUP>\"\nGet-LocalGroupMember -Group \"Remote Desktop Users\""
+   },
+   {
+    "label": "אימות חיבור",
+    "text": "Test-NetConnection <TS-SERVER> -Port 3389\nmstsc /v:<TS-SERVER>"
+   }
+  ],
+  "guiSteps": [
+   "בסביבה גדולה: להגדיר את החברות ב-GPO: Computer Configuration ← Policies ← Windows Settings ← Security Settings ← Restricted Groups (או Preferences ← Local Users and Groups).",
+   "חברות חדשה בקבוצה: המשתמש צריך Sign out/in (טוקן)."
+  ],
+  "ifNotWorking": "אין חיבור בכלל: פורט 3389 חסום, השירות לא רץ או חומת אש (Test-NetConnection ובדיקת Windows Firewall). נתקע על Welcome: ראה \"RDP תקוע על Welcome\".",
+  "notes": "מקור: חבילת הפרקים הכללית, פרק 05. מחליפים <PLACEHOLDERS> בערכי הסביבה שלך. הודעה \"The connection was denied because the user account is not authorized for remote login\" = המשתמש לא ב-Remote Desktop Users. NLA מקטין חשיפה. אל תחשוף 3389 ישירות לאינטרנט, גישה דרך VPN ועדיף עם MFA. תעבורה באותה רשת לא עוברת בחומה ולא נרשמת.",
+  "tags": [
+   "rdp",
+   "3389",
+   "remote desktop users",
+   "nla",
+   "access",
+   "גישה",
+   "הדרכה",
+   "general"
+  ],
+  "createdAt": 1760600000000,
+  "updatedAt": 1760600000000
+ },
+ {
+  "id": "ra-duo-mfa-rdp",
+  "titleHe": "Duo MFA לכניסת RDP: התקנה ותרחישים",
+  "titleEn": "Duo MFA for RDP logon",
+  "category": "Remote Access",
+  "symptom": "הוספת שלב אימות בטלפון לכניסה ב-RDP לשרת Windows. כולל טלפון שאבד ו-Duo שדילג על האימות.",
+  "commands": [
+   {
+    "label": "שרת: בדיקת גישה ל-API של Duo (https 443)",
+    "text": "Test-NetConnection api-xxxxxxxx.duosecurity.com -Port 443"
+   },
+   {
+    "label": "סשן קיים שגורם ל-Duo לדלג: למצוא ולנתק",
+    "text": "query user\nlogoff <ID>"
+   }
+  ],
+  "guiSteps": [
+   "Admin Panel ← Applications ← Protect an Application ← Microsoft RDP ← Protect. רושמים Integration key, Secret key, API hostname. המפתחות הם סוד: לא בדוח, לא בקבצים משותפים, לא בצילומי מסך.",
+   "Users ← Add User ← אותו שם משתמש כמו ב-AD ← קישור רישום ← Duo Mobile וסריקה.",
+   "בשרת: התקנת Duo Authentication for Windows Logon והזנת שלושת הערכים.",
+   "הגדרות: FailOpen=off (אם Duo לא זמין, הכניסה נחסמת), Auto push=on, Only prompt for Duo on RDP=on (כניסה בקונסולה ללא Duo, גישת חירום).",
+   "בדיקה: mstsc ← סיסמה ← אישור בטלפון. Reports ← Authentication Log ← Granted.",
+   "טלפון אבד: Users ← המשתמש ← Bypass Code (חד-פעמי) ← המשתמש מקליד ב-Duo. אחרי טלפון חדש: רישום מחדש ומחיקת המכשיר הישן.",
+   "לא משנים Status ל-Bypass (מדלג על Duo ללא הגבלה). אם שונה זמנית, מחזירים ל-Active.",
+   "Duo דילג על האימות: לבדוק Status=Bypass, Authentication Log (Result/Reason). אין שורה חדשה בלוג = Duo לא נקרא, אולי חיבור מחדש לסשן קיים."
+  ],
+  "ifNotWorking": "עם FailOpen=off, בלי גישה ל-API של Duo ב-443 אף אחד לא נכנס. להתיר ליעד הזה בחומה.",
+  "notes": "מקור: חבילת הפרקים הכללית, פרק 06. מחליפים <PLACEHOLDERS> בערכי הסביבה שלך. סגירת חלון RDP בזמן המתנה לאישור Duo עלולה להשאיר סשן יתום ולתקוע TermService (ראה \"RDP תקוע על Welcome\"). הבדל: Bypass Code חד-פעמי לעומת Status Bypass קבוע.",
+  "tags": [
+   "duo",
+   "mfa",
+   "2fa",
+   "rdp",
+   "bypass",
+   "failopen",
+   "אימות",
+   "הדרכה",
+   "general"
+  ],
+  "createdAt": 1760600000000,
+  "updatedAt": 1760600000000
+ },
+ {
+  "id": "vpn-sstp-rras-nps-setup",
+  "titleHe": "שרת VPN: RRAS + SSTP + NPS (הגדרה מלאה)",
+  "titleEn": "VPN server: RRAS + SSTP + NPS setup",
+  "category": "VPN",
+  "symptom": "VPN גישה מרחוק: SSTP על 443, אימות דרך NPS (RADIUS) מול AD. שרת ה-VPN מומלץ ב-DMZ עם כרטיס יחיד.",
+  "commands": [
+   {
+    "label": "שרת ה-VPN: תפקידים",
+    "text": "Install-WindowsFeature RemoteAccess, DirectAccess-VPN, Routing -IncludeManagementTools\nInstall-RemoteAccess -VpnType Vpn"
+   },
+   {
+    "label": "בדיקת קישור תעודה",
+    "text": "netsh http show sslcert | findstr /i \"443 Hash\""
+   },
+   {
+    "label": "האם 443 מאזין (PID 4 = HTTP.sys)",
+    "text": "netstat -ano | findstr \":443 \" | findstr LISTENING"
+   },
+   {
+    "label": "שירותים",
+    "text": "Get-Service RemoteAccess, SstpSvc"
+   },
+   {
+    "label": "אחרי שינוי ספק האימות",
+    "text": "Restart-Service RemoteAccess -Force"
+   },
+   {
+    "label": "התקנת NPS",
+    "text": "Install-WindowsFeature NPAS -IncludeManagementTools"
+   },
+   {
+    "label": "לקוח: יצירת חיבור (SplitTunneling: רק תעבורת הארגון עוברת)",
+    "text": "Add-VpnConnection -Name \"<CONNECTION-NAME>\" -ServerAddress \"<VPN-FQDN>\" -TunnelType Sstp -AuthenticationMethod MSChapv2 -EncryptionLevel Required -SplitTunneling $true"
+   },
+   {
+    "label": "לקוח: מצב",
+    "text": "Get-VpnConnection"
+   }
+  ],
+  "guiSteps": [
+   "ארכיטקטורה: לקוח ← חומה (443) ← VPN-SERVER ב-DMZ ← RADIUS UDP 1812 ← NPS-SERVER ← AD.",
+   "תעודה: מה-CA הפנימי או ציבורי עם Subject/SAN = <VPN-FQDN>, ב-LocalMachine\\My.",
+   "קישור התעודה ל-SSTP: rrasmgmt.msc ← קליק ימני על השרת ← Properties ← Security ← SSL Certificate Binding.",
+   "ספק האימות (חשוב): Properties ← Security ← Authentication provider ← RADIUS Authentication ← Configure ← Add: NPS-SERVER, Port 1812, Shared secret חזק זהה בשני הצדדים.",
+   "בריכת כתובות: Properties ← IPv4 ← Static address pool, טווח שלא מתנגש, והכרטיס (Adapter) הנכון.",
+   "NPS (nps.msc): RADIUS Clients ← New ← כתובת ה-IP של שרת ה-VPN כפי שהיא מגיעה ל-NPS ואותו Shared secret.",
+   "Network Policies ← New (VPN-Users-Hours): Conditions = Windows Groups + NAS Port Type=Virtual (VPN) + Day and time; Permission=Grant access; Authentication=MS-CHAPv2; Encryption MPPE 128-bit. המדיניות הספציפית מעל ברירות המחדל.",
+   "המשתמש ב-AD: dsa.msc ← Dial-in ← Control access through NPS Network Policy, והוא חבר בקבוצת ה-VPN.",
+   "חומת אש: 443 TCP לשרת ה-VPN, 1812/1813 UDP בין VPN ל-NPS, DNS/Kerberos/LDAP/NTP לבקרים, 80/443 החוצה לעדכונים ו-CRL, ולקוחות VPN רק למה שנדרש.",
+   "בדיקת הצלחה: בחומה 443 נכנס ואז 1812; ב-NPS אירוע 6272 (אושר); בלקוח Connected וכתובת מהבריכה."
+  ],
+  "ifNotWorking": "אם ספק האימות נשאר Windows Authentication, מדיניות NPS לא חלה ומשתמשים עם Dial-in=Control access through NPS נדחים.",
+  "notes": "מקור: חבילת הפרקים הכללית, פרק 08. מחליפים <PLACEHOLDERS> בערכי הסביבה שלך. בייצור לשפר: MS-CHAPv2 חלש, עדיפים EAP-TLS או PEAP; להוסיף MFA (NPS Extension); תעודה עם נתיב CRL ב-HTTP נגיש מבחוץ; לא לחשוף את NPS לאינטרנט. לבדוק גם דחייה מחוץ לשעות (אירוע 6273).",
+  "tags": [
+   "vpn",
+   "sstp",
+   "rras",
+   "nps",
+   "radius",
+   "dmz",
+   "הגדרה",
+   "setup",
+   "הדרכה",
+   "general"
+  ],
+  "createdAt": 1760600000000,
+  "updatedAt": 1760600000000
+ },
+ {
+  "id": "vpn-0x80092013",
+  "titleHe": "VPN: שגיאה 0x80092013 (בדיקת ביטול תעודה נכשלה)",
+  "titleEn": "VPN error 0x80092013 (revocation check failed)",
+  "category": "VPN",
+  "symptom": "\"The revocation function was unable to check revocation because the revocation server was offline\". הלקוח מבחוץ לא מצליח לבדוק אם התעודה בוטלה.",
+  "commands": [
+   {
+    "label": "עוקף למעבדה בלבד (בצד הלקוח)",
+    "text": "reg add HKLM\\SYSTEM\\CurrentControlSet\\Services\\SstpSvc\\Parameters /v NoCertRevocationCheck /t REG_DWORD /d 1 /f\nRestart-Service SstpSvc -Force"
+   },
+   {
+    "label": "מחיקת העוקף אחרי הבדיקה",
+    "text": "reg delete HKLM\\SYSTEM\\CurrentControlSet\\Services\\SstpSvc\\Parameters /v NoCertRevocationCheck /f\nRestart-Service SstpSvc -Force"
+   }
+  ],
+  "guiSteps": [
+   "פתרון אמיתי: ב-CA להוסיף נתיב CDP ב-HTTP הנגיש מבחוץ ולהנפיק מחדש את התעודה."
+  ],
+  "ifNotWorking": "",
+  "notes": "מקור: חבילת הפרקים הכללית, פרק 09. מחליפים <PLACEHOLDERS> בערכי הסביבה שלך. הסיבה: התעודה מפנה ל-CRL רק דרך LDAP (פנימי). העוקף הוא למעבדה בלבד ואסור להשאיר בייצור.",
+  "tags": [
+   "vpn",
+   "0x80092013",
+   "crl",
+   "revocation",
+   "certificate",
+   "sstp",
+   "הדרכה",
+   "general"
+  ],
+  "createdAt": 1760600000000,
+  "updatedAt": 1760600000000
+ },
+ {
+  "id": "vpn-terminated-20271",
+  "titleHe": "VPN: \"The connection was terminated by the remote computer\"",
+  "titleEn": "VPN: connection terminated by the remote computer",
+  "category": "VPN",
+  "symptom": "החיבור מגיע לשרת ונסגר בשלב מאוחר. ההודעה כללית ולא מסבירה את הסיבה.",
+  "commands": [
+   {
+    "label": "בשרת ה-VPN: אירועי RemoteAccess ו-Schannel",
+    "text": "Get-WinEvent -LogName System -MaxEvents 25 | ? ProviderName -match 'RemoteAccess|Rras|RasSstp|Schannel' |\n  ft TimeCreated, ProviderName, Id, Message -Wrap"
+   },
+   {
+    "label": "אחרי תיקון ספק האימות",
+    "text": "Restart-Service RemoteAccess -Force"
+   }
+  ],
+  "guiSteps": [
+   "Event Viewer ← System, שרת ה-VPN: אירוע 20271 (\"the account does not have permission to dial in\") או 20258.",
+   "סיבה נפוצה: ספק האימות ב-RRAS הוא Windows Authentication והמשתמש מוגדר Control access through NPS Network Policy: אין מי שיאשר.",
+   "פתרון: rrasmgmt.msc ← Properties ← Security ← RADIUS Authentication. זמנית: Allow access על המשתמש (עוקף NPS)."
+  ],
+  "ifNotWorking": "",
+  "notes": "מקור: חבילת הפרקים הכללית, פרק 09. מחליפים <PLACEHOLDERS> בערכי הסביבה שלך. ",
+  "tags": [
+   "vpn",
+   "20271",
+   "20258",
+   "terminated",
+   "dial-in",
+   "nps",
+   "rras",
+   "הדרכה",
+   "general"
+  ],
+  "createdAt": 1760600000000,
+  "updatedAt": 1760600000000
+ },
+ {
+  "id": "vpn-nps-invalid-client-13",
+  "titleHe": "VPN: NPS אירוע 13 (invalid RADIUS client IP) ו-NAT",
+  "titleEn": "VPN: NPS event 13 invalid RADIUS client IP (NAT)",
+  "category": "VPN",
+  "symptom": "ב-NPS מופיע אירוע 13: \"RADIUS message was received from the invalid RADIUS client IP address X\". NPS מתעלם בשקט ולכן אין 6272 או 6273.",
+  "commands": [
+   {
+    "label": "ב-NPS: אירוע 13 ואחרים",
+    "text": "Get-WinEvent -FilterHashtable @{LogName='System'; ProviderName='NPS'} -MaxEvents 5 | ft TimeCreated, Id, Message -Wrap"
+   },
+   {
+    "label": "אירועי אישור/דחייה",
+    "text": "Get-WinEvent -FilterHashtable @{LogName='Security'; Id=6272,6273} -MaxEvents 3 | fl TimeCreated, Message"
+   }
+  ],
+  "guiSteps": [
+   "סיבה נפוצה: NAT. החומה מתרגמת את כתובת שרת ה-VPN לכתובת של החומה, ו-NPS רואה כתובת שלא רשומה כלקוח RADIUS.",
+   "פתרון: כלל No-NAT בין ה-DMZ לרשת השרתים (ראה \"Check Point: DMZ, NAT\"). פחות טוב: לרשום את כתובת החומה כלקוח RADIUS.",
+   "אחרי תיקון NAT: חיבורי UDP ישנים נשארים בטבלה עם התרגום הישן. להמתין דקה בלי ניסיונות, או לנקות את הטבלה."
+  ],
+  "ifNotWorking": "",
+  "notes": "מקור: חבילת הפרקים הכללית, פרק 09. מחליפים <PLACEHOLDERS> בערכי הסביבה שלך. ",
+  "tags": [
+   "vpn",
+   "nps",
+   "radius",
+   "nat",
+   "event 13",
+   "invalid client",
+   "הדרכה",
+   "general"
+  ],
+  "createdAt": 1760600000000,
+  "updatedAt": 1760600000000
+ },
+ {
+  "id": "vpn-reason-66-eap",
+  "titleHe": "VPN: NPS 6273 Reason Code 66 (EAP במקום MS-CHAPv2)",
+  "titleEn": "VPN: NPS 6273 reason 66 (EAP vs MS-CHAPv2)",
+  "category": "VPN",
+  "symptom": "ב-NPS אירוע 6273 עם Reason Code 66: שיטת האימות שהלקוח ביקש לא מופעלת במדיניות. כשמוסיפים VPN דרך הממשק ובוחרים \"Username and password\", ברירת המחדל נוטה ל-EAP.",
+  "commands": [
+   {
+    "label": "לקוח: יצירה מחדש עם MS-CHAPv2",
+    "text": "Remove-VpnConnection -Name \"<CONNECTION-NAME>\" -Force\nAdd-VpnConnection -Name \"<CONNECTION-NAME>\" -ServerAddress \"<VPN-FQDN>\" -TunnelType Sstp -AuthenticationMethod MSChapv2 -EncryptionLevel Required -SplitTunneling $true"
+   }
+  ],
+  "guiSteps": [
+   "חלופה בצד השרת: ב-Constraints של מדיניות ה-NPS להוסיף EAP-MSCHAPv2 או PEAP, ולאפשר EAP גם ב-RRAS."
+  ],
+  "ifNotWorking": "",
+  "notes": "מקור: חבילת הפרקים הכללית, פרק 09. מחליפים <PLACEHOLDERS> בערכי הסביבה שלך. ",
+  "tags": [
+   "vpn",
+   "nps",
+   "6273",
+   "reason 66",
+   "eap",
+   "mschapv2",
+   "הדרכה",
+   "general"
+  ],
+  "createdAt": 1760600000000,
+  "updatedAt": 1760600000000
+ },
+ {
+  "id": "vpn-nps-reason-codes",
+  "titleHe": "VPN: קודי Reason נפוצים ב-NPS 6273",
+  "titleEn": "VPN: common NPS 6273 reason codes",
+  "category": "VPN",
+  "symptom": "NPS נותן אירוע 6272 כשהגישה אושרה ו-6273 כשנדחתה, עם Reason Code שמסביר למה.",
+  "commands": [
+   {
+    "label": "אחרון 6272/6273",
+    "text": "Get-WinEvent -FilterHashtable @{LogName='Security'; Id=6272,6273} -MaxEvents 3 | fl TimeCreated, Message"
+   }
+  ],
+  "guiSteps": [
+   "16 = אימות נכשל (שם משתמש או סיסמה).",
+   "21 = אף מדיניות לא תואמת (קבוצה, NAS Port Type, שעות).",
+   "48 = לא תואם אף מדיניות רשת.",
+   "65 = חסרה הרשאת Dial-in.",
+   "66 = שיטת אימות לא מופעלת במדיניות (ראה Reason 66)."
+  ],
+  "ifNotWorking": "",
+  "notes": "מקור: חבילת הפרקים הכללית, פרק 09. מחליפים <PLACEHOLDERS> בערכי הסביבה שלך. ",
+  "tags": [
+   "vpn",
+   "nps",
+   "reason code",
+   "6273",
+   "16",
+   "21",
+   "48",
+   "65",
+   "66",
+   "הדרכה",
+   "general"
+  ],
+  "createdAt": 1760600000000,
+  "updatedAt": 1760600000000
+ },
+ {
+  "id": "vpn-stale-hosts-dns",
+  "titleHe": "VPN: חיבור נכשל בגלל רשומה ישנה ב-hosts או DNS",
+  "titleEn": "VPN: stale hosts/DNS entry",
+  "category": "VPN",
+  "symptom": "החיבור נכשל בלי שגיאה ברורה. הלקוח מנסה כתובת ישנה של שרת ה-VPN.",
+  "commands": [
+   {
+    "label": "מה השם מתורגם אליו",
+    "text": "Resolve-DnsName <VPN-FQDN>"
+   },
+   {
+    "label": "רשומה ב-hosts",
+    "text": "Select-String '<VPN-FQDN>' C:\\Windows\\System32\\drivers\\etc\\hosts"
+   },
+   {
+    "label": "ניקוי קאש",
+    "text": "ipconfig /flushdns"
+   }
+  ],
+  "guiSteps": [
+   "למחוק רשומות ישנות מקובץ hosts (כמנהל), ואחר כך flushdns.",
+   "רשומת hosts זמנית שהוספת לבדיקה: למחוק אחרי הבדיקה."
+  ],
+  "ifNotWorking": "",
+  "notes": "מקור: חבילת הפרקים הכללית, פרק 09 + 13. מחליפים <PLACEHOLDERS> בערכי הסביבה שלך. ",
+  "tags": [
+   "vpn",
+   "hosts",
+   "dns",
+   "flushdns",
+   "stale",
+   "הדרכה",
+   "general"
+  ],
+  "createdAt": 1760600000000,
+  "updatedAt": 1760600000000
+ },
+ {
+  "id": "vpn-restart-dependent-timedout",
+  "titleHe": "VPN: Restart-Service \"has dependent services\" ו-TimedOut",
+  "titleEn": "VPN: restart-service dependents and TimedOut",
+  "category": "VPN",
+  "symptom": "שני תסמינים: Restart-Service נכשל בגלל שירותים תלויים, והחיבור מהלקוח לא מגיע בכלל (TimedOut).",
+  "commands": [
+   {
+    "label": "הפעלה מחדש עם Force (עם מקף ב-PowerShell)",
+    "text": "Restart-Service <SERVICE> -Force"
+   },
+   {
+    "label": "מהלקוח: האם 443 מגיע",
+    "text": "Test-NetConnection <VPN-FQDN> -Port 443"
+   },
+   {
+    "label": "בשרת ה-VPN",
+    "text": "netstat -ano | findstr \":443 \""
+   }
+  ],
+  "guiSteps": [
+   "אם השירות נתקע ב-Stopping: להרוג את התהליך (ראה RDP תקוע) או להפעיל מחדש את השרת.",
+   "TimedOut, בחומה לחפש src:<CLIENT-IP>. Drop בכלל שלפני כלל ה-VPN: לסדר את הכללים. אין שורות בכלל: החבילה לא מגיעה (ניתוב, Port Forward בנתב, כתובת WAN שהשתנתה).",
+   "בשרת ה-VPN צריך LISTENING על 443."
+  ],
+  "ifNotWorking": "",
+  "notes": "מקור: חבילת הפרקים הכללית, פרק 09. מחליפים <PLACEHOLDERS> בערכי הסביבה שלך. ",
+  "tags": [
+   "vpn",
+   "restart-service",
+   "dependent",
+   "timedout",
+   "443",
+   "הדרכה",
+   "general"
+  ],
+  "createdAt": 1760600000000,
+  "updatedAt": 1760600000000
+ },
+ {
+  "id": "vpn-no-connection-checklist",
+  "titleHe": "VPN: רשימת בדיקה כשאין חיבור",
+  "titleEn": "VPN: no-connection checklist",
+  "category": "VPN",
+  "symptom": "סדר בדיקה אחיד מהלקוח ועד ה-AD, כדי לא לנחש.",
+  "commands": [
+   {
+    "label": "1. לקוח ← חומה",
+    "text": "Test-NetConnection <VPN-FQDN> -Port 443"
+   },
+   {
+    "label": "3. שרת VPN: מאזין ותעודה",
+    "text": "netstat -ano | findstr \":443 \" | findstr LISTENING\nnetsh http show sslcert | findstr /i \"443 Hash\""
+   },
+   {
+    "label": "5. NPS: 6272/6273",
+    "text": "Get-WinEvent -FilterHashtable @{LogName='Security'; Id=6272,6273} -MaxEvents 3 | fl TimeCreated, Message"
+   }
+  ],
+  "guiSteps": [
+   "1. לקוח ← חומה: Test-NetConnection על 443.",
+   "2. לוג חומה: האם הבקשה התקבלה (Accept).",
+   "3. שרת VPN: LISTENING על 443 והתעודה מקושרת.",
+   "4. שרת VPN ← NPS: 1812 UDP עובר בחומה.",
+   "5. NPS: אירוע 6272 או 6273 (ואם אין, אירוע 13).",
+   "6. המשתמש: חבר בקבוצה, Dial-in נכון, סיסמה בתוקף.",
+   "7. לקוח: סוג אימות תואם למדיניות.",
+   "איפה כל שכבה משאירה עקבות: חומה = הלוג, שרת VPN = System (RemoteAccess 20271/20258), NPS = Security (6272/6273) ו-System (NPS), לקוח = קוד השגיאה בהודעה."
+  ],
+  "ifNotWorking": "",
+  "notes": "מקור: חבילת הפרקים הכללית, פרק 09. מחליפים <PLACEHOLDERS> בערכי הסביבה שלך. ",
+  "tags": [
+   "vpn",
+   "checklist",
+   "troubleshooting",
+   "רשימת בדיקה",
+   "firewall",
+   "nps",
+   "הדרכה",
+   "general"
+  ],
+  "createdAt": 1760600000000,
+  "updatedAt": 1760600000000
+ },
+ {
+  "id": "veeam-install-job",
+  "titleHe": "Veeam B&R: התקנה, מאגר ומשימת גיבוי ראשונה",
+  "titleEn": "Veeam B&R: install, repository, first job",
+  "category": "Backup",
+  "symptom": "הקמת גיבוי ל-Windows Servers עם Veeam Backup & Replication: שרת גיבוי, דיסק ייעודי, Protection Group ומשימה.",
+  "commands": [
+   {
+    "label": "אין פקודות ייעודיות, בודקים את דיסק הגיבוי",
+    "text": "Get-Volume | ft DriveLetter, FileSystem, AllocationUnitSize, SizeRemaining, Size"
+   }
+  ],
+  "guiSteps": [
+   "תכנון: שרת ייעודי מחובר לדומיין, לפחות 8 GB זיכרון (12 GB במעבדה), דיסק גיבוי נפרד מדיסק המערכת, NTFS עם 64K allocation unit.",
+   "כלל 3-2-1: 3 עותקים, 2 סוגי מדיה, 1 מחוץ לאתר. גיבוי על אותו שרת הוא לא גיבוי.",
+   "התקנה: ISO של Veeam B&R (כ-20 GB) ← Setup ← Backup Server + Console + Catalog ← בסיס נתונים מקומי (PostgreSQL) ← רישיון Free/Trial/Community (לרשום תאריך סיום).",
+   "מאגר: Backup Infrastructure ← Backup Repositories ← Add ← Direct attached storage ← Microsoft Windows ← <DRIVE>:\\Backup.",
+   "Protection Group: Inventory ← Physical & Cloud Infrastructure ← Add Protection Group ← Active Directory ← בחירת OU של השרתים. Veeam מתקין Agent.",
+   "שרתים וירטואליים על Hypervisor: מגבים בדרך כלל ברמת ה-Hypervisor. אם מגבים עם Agent, לוודא שאין חפיפה.",
+   "משימה: Home ← Backup Job ← Windows computer ← Server ← Managed by backup server.",
+   "Computers: השרתים. Backup Mode: Entire computer. Destination: המאגר ו-Retention (למשל 3 ימים).",
+   "Guest Processing: Application-aware processing (VSS), חשוב לבקרי דומיין ולמסדי נתונים. Schedule: לילי. Finish ← Run."
+  ],
+  "ifNotWorking": "",
+  "notes": "מקור: חבילת הפרקים הכללית, פרק 10. מחליפים <PLACEHOLDERS> בערכי הסביבה שלך. גיבוי בבקר דומיין חייב VSS לעקביות AD. שחזור בקר דומיין דורש תהליך מיוחד (Authoritative / Non-authoritative) ולא משחזרים בקר ישן בלי לבדוק את מצב השכפול. להבדיל בין VSS ל-Crash-consistent.",
+  "tags": [
+   "veeam",
+   "backup",
+   "גיבוי",
+   "vss",
+   "repository",
+   "3-2-1",
+   "job",
+   "הדרכה",
+   "general"
+  ],
+  "createdAt": 1760600000000,
+  "updatedAt": 1760600000000
+ },
+ {
+  "id": "veeam-restore-warnings",
+  "titleHe": "Veeam: בדיקת שחזור ואזהרות נפוצות",
+  "titleEn": "Veeam: restore testing and common warnings",
+  "category": "Backup",
+  "symptom": "גיבוי שלא נבדק שחזורו הוא לא גיבוי. כולל אזהרות נפוצות כמו Full Repair Needed ובעיית מחיצת EFI.",
+  "commands": [
+   {
+    "label": "מצב הדיסקים במכונה המגובה",
+    "text": "Get-Disk; Get-Partition"
+   }
+  ],
+  "guiSteps": [
+   "שחזור: Restore ← Entire computer / Files / Application items. לבדוק שחזור קובץ אחד לפחות ולתעד את הזמן.",
+   "SureBackup (אם ברישיון): בדיקה אוטומטית של שחזור.",
+   "Full Repair Needed או בעיה במחיצת EFI System: לבדוק את הדיסק ואת מחיצת ה-EFI במכונה המגובה ולהריץ שוב.",
+   "גיבוי נעצר באמצע (השרת כובה): להריץ שוב ולהקצות חלון גיבוי שבו השרתים זמינים.",
+   "אין מקום במאגר: להגדיל דיסק או להקטין Retention."
+  ],
+  "ifNotWorking": "",
+  "notes": "מקור: חבילת הפרקים הכללית, פרק 10. מחליפים <PLACEHOLDERS> בערכי הסביבה שלך. לתעד בדיקת שחזור: תאריך, מה שוחזר, כמה זמן.",
+  "tags": [
+   "veeam",
+   "restore",
+   "שחזור",
+   "surebackup",
+   "efi",
+   "warnings",
+   "הדרכה",
+   "general"
+  ],
+  "createdAt": 1760600000000,
+  "updatedAt": 1760600000000
+ },
+ {
+  "id": "cp-install-interfaces",
+  "titleHe": "Check Point R81.20: התקנה, ממשקים ו-SmartConsole",
+  "titleEn": "Check Point R81.20: install, interfaces, SmartConsole",
+  "category": "Firewall",
+  "symptom": "התקנת חומת אש Check Point (Gaia R81.20), הגדרת ממשקים וחיבור ראשון מ-SmartConsole.",
+  "commands": [
+   {
+    "label": "clish: כל הממשקים",
+    "text": "show interfaces all"
+   },
+   {
+    "label": "clish: ממשק בודד",
+    "text": "show interface <ETH>"
+   },
+   {
+    "label": "clish: ניתוב",
+    "text": "show route"
+   },
+   {
+    "label": "clish: בדיקת חיבור",
+    "text": "ping <IP>"
+   }
+  ],
+  "guiSteps": [
+   "ארכיטקטורה: Standalone (שער וניהול על אותה מכונה) למעבדה או ארגון קטן, ובארגון גדול נפרד. ניהול מ-SmartConsole.",
+   "מומלץ ל-VM: 4 vCPU, 8 GB RAM, 100 GB דיסק. רישיון Trial: לרשום תאריך סיום.",
+   "ממשקים: eth0 ניהול, eth1 LAN, eth2 WAN (עדיף סטטי), eth3 DMZ. רשת הניהול נפרדת וניגשים אליה רק מתחנת הניהול.",
+   "התקנה: אתחול מ-ISO ← Install ← First Time Configuration Wizard (IP, Mask, Gateway) ← שם מארח, DNS, NTP, סיסמת admin ← סוג התקנה ← GUI Clients: רק תחנת הניהול ← סיום ואתחול.",
+   "Gaia Portal: https://<FW-MGMT-IP> ← Network Management ← Network Interfaces ← Edit ← IP/Mask ← Enable.",
+   "נתיב ברירת מחדל: Network Management ← IPv4 Static Routes ← Add ← Default ← Gateway של הספק. אם ה-WAN מ-DHCP ייתכן שהנתיב לא מותקן: להגדיר ידנית.",
+   "SmartConsole: התחברות ל-<FW-MGMT-IP> עם admin ← אישור טביעת האצבע ← Gateways & Servers ← השער ← Network Management ← Get Interfaces ← With Topology.",
+   "טופולוגיה: ניהול ו-LAN = This Network (Internal); WAN = Internet (External); DMZ = This Network (Internal) + Interface leads to DMZ. Anti-Spoofing: Prevent.",
+   "Publish שומר במסד הניהול. Install Policy דוחף לשער. בלי Install אין שינוי. Stealth rule חוסם גישה ישירה לשער."
+  ],
+  "ifNotWorking": "",
+  "notes": "מקור: חבילת הפרקים הכללית, פרק 11. מחליפים <PLACEHOLDERS> בערכי הסביבה שלך. בסביבה וירטואלית כל ממשק ב-Segment או VLAN נפרד, בלי חיבור שעוקף את החומה.",
+  "tags": [
+   "checkpoint",
+   "check point",
+   "gaia",
+   "smartconsole",
+   "firewall",
+   "חומת אש",
+   "interfaces",
+   "topology",
+   "הדרכה",
+   "general"
+  ],
+  "createdAt": 1760600000000,
+  "updatedAt": 1760600000000
+ },
+ {
+  "id": "cp-policy-rules",
+  "titleHe": "Check Point: מדיניות כללים מומלצת וסדר",
+  "titleEn": "Check Point: recommended rule base and order",
+  "category": "Firewall",
+  "symptom": "מדיניות גישה שמתירה רק מה שנדרש, עם סדר שמונע חסימות מיותרות ועם Cleanup שנרשם בלוג.",
+  "commands": [],
+  "guiSteps": [
+   "עקרונות: כללים נבדקים מלמעלה למטה והראשון שמתאים קובע; ברירת מחדל חסום; כל כלל חשוב עם Log; Cleanup חוסם הכול עם Log; Publish ואז Install Policy; בודקים מול היעד המקורי (לפני NAT).",
+   "1 Mgmt-Access: Host-Mgmt ← השער, https/ssh/CPMI, Accept.",
+   "2 Internet-to-VPN: Any ← Host-VPN ו-Host-FW-WAN, https, Accept.",
+   "3 Stealth: Any ← השער, Any, Drop.",
+   "4 VPN-to-DCs: Host-VPN ← Group-DCs, DNS/Kerberos/LDAP/NTP/SMB/RPC (135 וטווח גבוה)/RADIUS אם NPS שם/ICMP, Accept.",
+   "5 Block-Private: Net-LAN ו-Net-DMZ ← Private-Ranges (10/8, 172.16/12, 192.168/16), Drop.",
+   "6 VPN-to-Internet: Host-VPN ← Any, http/https, Accept.",
+   "7 LAN-to-Internet: Net-LAN ← Any, dns/http/https/ntp/ICMP echo, Accept.",
+   "8 Drop-Noise: Any ← Any, NetBIOS/igmp ושירותי רעש, Drop, Track=None.",
+   "9 Cleanup: Any ← Any, Any, Drop, Log.",
+   "סדר: כלל 2 מעל Stealth (היעד המקורי הוא החומה עצמה). Block-Private מתחת לכללי ה-DMZ הספציפיים ומעל כללי האינטרנט.",
+   "שירות מותאם: New ← Service ← TCP/UDP ← שם ופורט. מלכודת: בשדה Protocol לבחור None, אחרת ערך מוגדר מראש (למשל NTP-UDP) נועל את הפורט.",
+   "אובייקטים: Host-Mgmt, Net-LAN, Net-DMZ, Host-VPN, Group-DCs, Private-Ranges (Network Group), Host-FW-WAN. מכונה בודדת = Host, רשת עם מסכה = Network."
+  ],
+  "ifNotWorking": "כלל חדש לא פועל: רק Publish בלי Install Policy. Accept לא תופס: כלל Drop מעליו (לבדוק Access Rule Name בלוג).",
+  "notes": "מקור: חבילת הפרקים הכללית, פרק 12. מחליפים <PLACEHOLDERS> בערכי הסביבה שלך. לצלם את המדיניות המלאה ולוג עם Access Rule Name. למה Cleanup עם Log: כדי לראות מה נחסם.",
+  "tags": [
+   "checkpoint",
+   "policy",
+   "rules",
+   "stealth",
+   "cleanup",
+   "כללים",
+   "firewall",
+   "rule base",
+   "הדרכה",
+   "general"
+  ],
+  "createdAt": 1760600000000,
+  "updatedAt": 1760600000000
+ },
+ {
+  "id": "cp-read-logs",
+  "titleHe": "Check Point: קריאת לוג ואבחון תקלת תקשורת",
+  "titleEn": "Check Point: reading logs to diagnose connectivity",
+  "category": "Firewall",
+  "symptom": "כל תקלת תקשורת עוברת בלוג של החומה. Access Rule Name הוא המפתח לדעת איזה כלל תפס.",
+  "commands": [
+   {
+    "label": "חיפוש ב-Logs & Events: לפי מקור",
+    "text": "src:<IP>"
+   },
+   {
+    "label": "מקור ויעד",
+    "text": "src:<IP> AND dst:<IP>"
+   },
+   {
+    "label": "לפי שירות (למשל RADIUS)",
+    "text": "src:<IP> AND service:1812"
+   }
+  ],
+  "guiSteps": [
+   "Logs & Events ← שורת החיפוש.",
+   "ירוק = Accept, אדום = Drop. עמודת Access Rule Name = איזה כלל תפס. Service = פורט ופרוטוקול.",
+   "לחיצה כפולה פותחת פירוט כולל NAT (XlateSrc = המקור אחרי התרגום).",
+   "1) האם יש שורה בכלל? אין שורה = החבילה לא הגיעה לחומה. 2) האם Drop ובאיזה כלל (Stealth, Cleanup)? 3) האם Accept? אז הבעיה מעבר לחומה (שרת, חזרה, NAT).",
+   "רעש נפוץ: NetBIOS (UDP 137/138), IGMP, שידורי נתב. אלה שידורים רגילים ולא תקיפה. מנקים בכלל Drop-Noise עם Track=None."
+  ],
+  "ifNotWorking": "",
+  "notes": "מקור: חבילת הפרקים הכללית, פרק 12. מחליפים <PLACEHOLDERS> בערכי הסביבה שלך. ",
+  "tags": [
+   "checkpoint",
+   "logs",
+   "לוג",
+   "access rule name",
+   "smartconsole",
+   "troubleshooting",
+   "firewall",
+   "הדרכה",
+   "general"
+  ],
+  "createdAt": 1760600000000,
+  "updatedAt": 1760600000000
+ },
+ {
+  "id": "cp-dmz-nat-portforward",
+  "titleHe": "Check Point: DMZ, NAT ו-Port Forward לשרת VPN",
+  "titleEn": "Check Point: DMZ, NAT and port forward to a VPN server",
+  "category": "Firewall",
+  "symptom": "שרת חשוף (VPN, אתר, דואר) יושב ב-DMZ עם כרטיס יחיד. אם נפרץ, התוקף מגיע רק למה שהחומה מתירה. כולל הכללים, ה-NAT והבדיקות.",
+  "commands": [
+   {
+    "label": "אימות ממשק ה-DMZ ב-clish",
+    "text": "show interface <ETH>"
+   },
+   {
+    "label": "מהשרת ב-DMZ: אמור להצליח",
+    "text": "Resolve-DnsName <DOMAIN-FQDN>\nTest-NetConnection <DC-IP> -Port 389\nTest-NetConnection 1.1.1.1 -Port 443"
+   },
+   {
+    "label": "מהשרת ב-DMZ: אמור להיכשל (הוכחת בידוד)",
+    "text": "Test-NetConnection <TS-SERVER-IP> -Port 3389\nTest-NetConnection <LOCAL-ROUTER-IP> -Port 80"
+   },
+   {
+    "label": "בדיקה מ\"חוץ\": לבדוק 443 לכתובת ה-WAN",
+    "text": "Test-NetConnection <WAN-IP> -Port 443"
+   },
+   {
+    "label": "ניקוי טבלת חיבורים (מנתק זמנית גם ניהול)",
+    "text": "fw tab -t connections -x -y"
+   }
+  ],
+  "guiSteps": [
+   "מבנה: אינטרנט ← <WAN-IP> ← חומה ← ממשק DMZ (<DMZ-GW-IP>) ← <VPN-SERVER> עם כרטיס אחד. כרטיס שני לרשת הפנימית עוקף את החומה ומבטל את הרעיון.",
+   "שלב 1: כרטיס רשת חדש לחומה ב-Segment ייעודי. Gaia Portal ← Network Interfaces ← Edit ← Enable ← <DMZ-GW-IP>/Mask. אימות עם show interface.",
+   "שלב 2: SmartConsole ← Get Interfaces With Topology ← ממשק DMZ: This Network (Internal), Network defined by the interface IP and Net Mask, סימון Interface leads to DMZ, Anti-Spoofing=Prevent. אובייקטים: Net-DMZ, Host-VPN, Host-FW-WAN.",
+   "שלב 3: כללים: Internet-to-VPN (יעד Host-VPN וגם Host-FW-WAN, מעל Stealth), VPN-to-DCs, Block-Private (מתחת לכלל הבקרים), VPN-to-Internet.",
+   "שלב 4א: Hide NAT ל-DMZ: באובייקט Net-DMZ ← NAT ← Add Automatic Address Translation rules ← Hide behind the gateway.",
+   "שלב 4ב (חובה): No-NAT ידני Net-DMZ ← Net-LAN, Translated = Original, מעל הכללים האוטומטיים. בלי זה השרתים הפנימיים רואים את החומה ולא את שרת ה-VPN: שובר RADIUS, הרשאות לפי כתובת ולוגים.",
+   "שלב 4ג: Port Forward: Any ← Host-FW-WAN, https, Translated Destination = Host-VPN.",
+   "שלב 5: Publish ואז Install Policy, לחכות ל-Succeeded.",
+   "בדיקה מ\"חוץ\" בלי Port Forward: להוסיף ל-hosts (כמנהל) <WAN-IP> <VPN-FQDN> ולמחוק אחרי הבדיקה, ואז Test-NetConnection על 443 ובלוג Internet-to-VPN ב-Accept.",
+   "בפרודקשן: Port Forward של 443 בנתב הארגוני אל <WAN-IP>, כתובת WAN סטטית או Reservation, ורשומת DNS ציבורית ל-<VPN-FQDN>."
+  ],
+  "ifNotWorking": "TimedOut ל-WAN:443 ובלוג Drop ב-Stealth: היעד המקורי הוא החומה, להוסיף Host-FW-WAN ליעד ולהעביר מעל Stealth. NPS event 13: חסר No-NAT. Install Policy הצליח ואין שינוי: בדוק את Access Rule Name ומספר כלל NAT בפירוט הלוג.",
+  "notes": "מקור: חבילת הפרקים הכללית, פרק 13. מחליפים <PLACEHOLDERS> בערכי הסביבה שלך. עיקרון חשוב: כללי הגישה נבדקים מול היעד המקורי (לפני NAT). כל התקלות כאן נפתרו מקריאת הלוג (Access Rule Name, XlateSrc).",
+  "tags": [
+   "checkpoint",
+   "dmz",
+   "nat",
+   "port forward",
+   "no-nat",
+   "hide nat",
+   "vpn",
+   "firewall",
+   "stealth",
+   "הדרכה",
+   "general"
+  ],
+  "createdAt": 1760600000000,
+  "updatedAt": 1760600000000
+ },
+ {
+  "id": "servers-behind-firewall",
+  "titleHe": "העברת שרתים לרשת מאחורי חומת אש",
+  "titleEn": "Moving servers behind a firewall",
+  "category": "Firewall",
+  "symptom": "שרתים מרשת שטוחה עוברים לרשת שהחומה שולטת בה: כל תעבורה החוצה עוברת בכללים ונרשמת. כולל כתובת Gateway, forwarder ואימות.",
+  "commands": [
+   {
+    "label": "Gateway חדש לשרת עם כתובת סטטית",
+    "text": "Remove-NetRoute -DestinationPrefix 0.0.0.0/0 -Confirm:$false -ErrorAction SilentlyContinue\nNew-NetRoute -InterfaceAlias \"<NIC>\" -DestinationPrefix 0.0.0.0/0 -NextHop <LAN-GW-IP>"
+   },
+   {
+    "label": "Forwarder ב-DNS של הבקר: בדיקה והחלפה",
+    "text": "Get-DnsServerForwarder\nRemove-DnsServerForwarder -IPAddress <OLD-FORWARDER> -Force\nAdd-DnsServerForwarder -IPAddress 1.1.1.1"
+   },
+   {
+    "label": "הוכחה שהשרת מאחורי החומה (MAC של כרטיס ה-LAN של החומה)",
+    "text": "Get-NetNeighbor -IPAddress <LAN-GW-IP> | ft IPAddress, LinkLayerAddress, State"
+   },
+   {
+    "label": "חיבור ו-DNS",
+    "text": "Test-NetConnection 1.1.1.1 -Port 443\nResolve-DnsName google.com"
+   },
+   {
+    "label": "שכפול AD אחרי המעבר",
+    "text": "repadmin /replsummary\nrepadmin /syncall /Ade"
+   },
+   {
+    "label": "תחנה עם שני כרטיסים: Gateway לכרטיס אחד בלבד",
+    "text": "Get-NetAdapter | ft Name, Status, MacAddress\nRemove-NetRoute -InterfaceAlias \"<SERVERS-NIC>\" -DestinationPrefix 0.0.0.0/0 -Confirm:$false\nGet-NetRoute -DestinationPrefix 0.0.0.0/0 | ft InterfaceAlias, NextHop, RouteMetric"
+   }
+  ],
+  "guiSteps": [
+   "לפני: חלון תחזוקה, גישת קונסולה לכל שרת (hypervisor/iLO/iDRAC), תיעוד כתובות נוכחיות, כללי חומה מוכנים (LAN-to-Internet, Block-Private, Hide NAT), כתובת ה-Gateway החדשה, ובקרי דומיין עוברים ביחד.",
+   "ביצוע: להעביר את כרטיס הרשת ל-Segment/VLAN של החומה, לקבוע Gateway, DNS נשאר בקרי הדומיין, forwarder לשרת ציבורי ולא לחומה.",
+   "בבקר נוסף: forwarder לבקר הראשון או לאותו שרת ציבורי, לא ללולאה.",
+   "בלוג החומה: תעבורה עם Access Rule Name=LAN-to-Internet (Accept).",
+   "מה רואים בלוג: https/http ל-Microsoft ו-Azure (עדכונים, טלמטריה; בייצור לשקול רשימת יעדים), DNS ל-1.1.1.1 (תקין), NetBIOS/IGMP ב-Cleanup (Drop-Noise), ניסיונות לרשתות פרטיות ב-Block-Private (לבדוק מי ולמה).",
+   "גישת ניהול: תחנה ברשת השרתים עם כניסה אליה דרך החומה או VPN (מומלץ), או כלל ייעודי מתחנת הניהול (RDP בלבד, עם Log, לא Any to Any).",
+   "תעבורה באותה רשת לא עוברת בחומה ולא תיראה בלוג. כדי שהחומה תשלוט, מפרידים רשתות עם כלל מפורש."
+  ],
+  "ifNotWorking": "שרת לא רואה את הבקר: כרטיס עדיין ברשת הישנה (Get-NetNeighbor). שגיאת שכפול 1256 זמנית צפויה כשבקרים ברשתות שונות, אחרי שניהם באותה רשת ו-syncall היא נעלמת. 8524 נשארת: ראה הרשומה על 8524. תקשורת פנימית נעלמה: Block-Private חוסם, לאפשר ספציפית לפניו.",
+  "notes": "מקור: חבילת הפרקים הכללית, פרק 14. מחליפים <PLACEHOLDERS> בערכי הסביבה שלך. אותה כתובת IP יכולה להתקיים בשתי רשתות שונות, ולכן MAC של ה-Gateway הוא ההוכחה. לצרף לדוח: תרשים לפני/אחרי, רשימת forwarders ולוג ראשוני.",
+  "tags": [
+   "segmentation",
+   "מעבר רשת",
+   "firewall",
+   "gateway",
+   "forwarder",
+   "checkpoint",
+   "get-netneighbor",
+   "הדרכה",
+   "general"
   ],
   "createdAt": 1760600000000,
   "updatedAt": 1760600000000
