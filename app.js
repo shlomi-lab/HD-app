@@ -721,15 +721,21 @@
       .then(function (entries) {
         if (!state.kv.seeded) {
           var seeds = (window.SEED_ENTRIES || []).map(function (s) { return normalizeEntry(s).entry; }).filter(Boolean);
-          return dbPutMany(seeds).then(function () { return kvSet('seeded', Date.now()); }).then(function () { return kvSet('buildSeeded', 1); }).then(function () { return seeds; });
+          return dbPutMany(seeds).then(function () { return kvSet('seeded', Date.now()); }).then(function () { return kvSet('seedVersion', window.SEED_VERSION || 1); }).then(function () { return seeds; });
         }
-        if (!state.kv.buildSeeded) {
-          // one-time top-up for installs created before the "Build a domain" chapter existed
+        var cur = window.SEED_VERSION || 1;
+        var had = state.kv.seedVersion || (state.kv.buildSeeded ? 2 : 1);
+        if (had < cur) {
+          // top-up once per new seed version: add only entries introduced after the installed version (never resurrects deleted ones)
           var have = {};
           entries.forEach(function (e) { have[e.id] = true; });
-          var add = (window.SEED_ENTRIES || []).filter(function (s) { return s.category === 'Build' && !have[s.id]; })
-            .map(function (s) { return normalizeEntry(s).entry; }).filter(Boolean);
-          return dbPutMany(add).then(function () { return kvSet('buildSeeded', 1); }).then(function () { return entries.concat(add); });
+          var wanted = {};
+          Object.keys(window.SEED_ADDED || {}).forEach(function (v) {
+            if (+v > had) (window.SEED_ADDED[v] || []).forEach(function (id) { wanted[id] = true; });
+          });
+          var add = (window.SEED_ENTRIES || []).filter(function (x) { return wanted[x.id] && !have[x.id]; })
+            .map(function (x) { return normalizeEntry(x).entry; }).filter(Boolean);
+          return dbPutMany(add).then(function () { return kvSet('seedVersion', cur); }).then(function () { return entries.concat(add); });
         }
         return entries;
       })

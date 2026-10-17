@@ -1,4 +1,6 @@
 /* Seed data for the helpdesk toolkit. Imported once into IndexedDB. */
+window.SEED_VERSION = 3;
+window.SEED_ADDED = {"2": ["build-00", "build-01", "build-02", "build-03", "build-04", "build-05", "build-06", "build-07", "build-08", "build-09", "build-10", "build-11", "build-12", "build-13", "build-14", "build-15", "build-16", "build-17", "build-18", "build-19", "build-20", "build-21"], "3": ["ra-rdp-orphan-session"]};
 window.SEED_ENTRIES = [
  {
   "id": "ad-lockout",
@@ -4560,6 +4562,85 @@ window.SEED_ENTRIES = [
    "תקלות",
    "catalog",
    "errors"
+  ],
+  "createdAt": 1760600000000,
+  "updatedAt": 1760600000000
+ },
+ {
+  "id": "ra-rdp-orphan-session",
+  "titleHe": "RDP תקוע על Welcome: סשן יתום ו-TermService תקוע",
+  "titleEn": "RDP hangs at \"Welcome\": orphaned session, TermService stuck in STOP_PENDING",
+  "category": "Remote Access",
+  "symptom": "משתמש מתחבר ב-RDP ונתקע על מסך Welcome, או שהחיבור לא נפתח בכלל. query user ו-qwinsta נתקעות (גם מרחוק). Get-Service TermService מראה Running אבל מטעה: שירות פועל לא אומר שהוא עונה. לרוב הקדים אותה ניתוק של חלון ה-RDP באמצע הכניסה (למשל בהמתנה לאישור Duo). חומרה גבוהה: אף משתמש חדש לא מתחבר.",
+  "commands": [
+   {
+    "label": "אבחון 1: תהליכי כניסה בסשן שאינו הקונסולה (יתומים)",
+    "text": "Get-Process winlogon, LogonUI -ErrorAction SilentlyContinue | ft Id, SessionId, CPU"
+   },
+   {
+    "label": "אבחון 2: מצב אמיתי של השירות (STOP_PENDING = תקוע, רשום את ה-PID)",
+    "text": "sc.exe queryex TermService"
+   },
+   {
+    "label": "אבחון 3: שגיאות אחרונות ביומן System",
+    "text": "Get-WinEvent -FilterHashtable @{LogName='System'; Level=1,2; StartTime=(Get-Date).AddHours(-3)} -MaxEvents 15 | ft TimeCreated, ProviderName, Message -Wrap"
+   },
+   {
+    "label": "אבחון 4: עדכונים אחרונים (לשלול עדכון לא תקין)",
+    "text": "Get-HotFix | Sort InstalledOn -Descending | Select -First 5"
+   },
+   {
+    "label": "אישור שהתהליך מארח רק שירותי RDP",
+    "text": "tasklist /svc /fi \"PID eq <PID>\""
+   },
+   {
+    "label": "הריגה והפעלה מחדש",
+    "text": "taskkill /F /PID <PID>\nStart-Service TermService\nqwinsta"
+   },
+   {
+    "label": "ניקוי סשן יתום שנשאר",
+    "text": "logoff <ID>"
+   },
+   {
+    "label": "אם לא נסגר",
+    "text": "reset session <ID>"
+   },
+   {
+    "label": "מוצא אחרון (בייצור: אחרי שהמשתמשים שמרו עבודה)",
+    "text": "Restart-Computer -Force"
+   },
+   {
+    "label": "בדיקה אחרי התיקון",
+    "text": "mstsc /v:<server>"
+   }
+  ],
+  "guiSteps": [
+   "גש לשרת דרך קונסולת ה-VM / iLO / hypervisor כמנהל (לא דרך RDP).",
+   "אל תנסה Restart-Service TermService -Force ולהמתין. אם מופיע \"Waiting for service to stop...\", לחץ Ctrl+C.",
+   "מצא PID עם sc.exe queryex TermService, ואשר עם tasklist /svc שהתהליך מארח רק שירותי RDP. אז taskkill ו-Start-Service.",
+   "qwinsta אמורה להחזיר: services (0), console (1), rdp-tcp (65536, Listen).",
+   "Task Manager ← Users ← קליק ימני על המשתמש ← Sign off (ניקוי סשן רגיל).",
+   "Task Manager ← Details ← קליק ימני על כותרת ← Select columns ← Session ID, לזיהוי winlogon / LogonUI יתומים.",
+   "services.msc ← Remote Desktop Services ← אם Stopping: Task Manager ← Services ← קליק ימני ← Go to details ← End task.",
+   "מניעה: GPO על ה-OU של שרתי ה-Terminal: Computer Configuration ← Administrative Templates ← Windows Components ← Remote Desktop Services ← Remote Desktop Session Host ← Session Time Limits ← Set time limit for disconnected sessions ← Enabled, 1 hour.",
+   "אחרי התיקון: בדוק mstsc, ואם יש MFA גם שההודעה מגיעה."
+  ],
+  "ifNotWorking": "אם TermService עדיין לא עולה אחרי taskkill: בדוק שוב sc.exe queryex ואת יומן System, ואם צריך Restart-Computer -Force (בייצור אחרי שהמשתמשים שמרו).",
+  "notes": "⚠️ לעולם אל תעצור את winlogon של סשן הקונסולה (סשן 1): זה מקריס את השרת. ממצא במעבדה (TS1, Windows Server 2025, 17/10/2026): קריסה של RdpIdd.dll (Microsoft Remote Display Adapter) ביומן System בדיוק בניתוק החיבור; winlogon ו-LogonUI בסשן 4 (יתום); TermService ב-STOP_PENDING. סיבה משוערת: ניתוק באמצע תהליך כניסה עם Duo MFA ממתין. לא הוכח ש-Duo הוא הגורם, ורק שחזור יאשר. לא עדכון Windows: העדכונים הותקנו חודש קודם ו-RDP עבד אחריהם. בתקלה דומה בארגון, הסרה עם wusa /uninstall /kb:<מספר> סבירה אחרי אימות. ה-GPO מנקה סשנים מנותקים אבל לא פותר סשן שנתקע לפני שהמשתמש נכנס. רעש ביומן שאפשר להתעלם ממנו: \"Secure Boot is not enabled\" (VM), \"immersivecontrolpanel did not register with DCOM\" (חסימת Settings ב-GPO). לשאול את המשתמש: האם סגרת את החלון בלי Sign out? עד איזה מסך הגעת (Welcome / Duo / שולחן עבודה)? האם אחרים מתחברים לאותו שרת?",
+  "tags": [
+   "rdp",
+   "termservice",
+   "stuck",
+   "תקוע",
+   "סשן",
+   "session",
+   "welcome",
+   "orphan",
+   "יתום",
+   "qwinsta",
+   "winlogon",
+   "duo",
+   "ts1"
   ],
   "createdAt": 1760600000000,
   "updatedAt": 1760600000000
