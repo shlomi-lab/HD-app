@@ -1,5 +1,5 @@
 /* Service worker: precache the whole app shell, serve cache-first. */
-const VERSION = 'helpdesk-v4';
+const VERSION = 'helpdesk-v5';
 const ASSETS = [
   './',
   './index.html',

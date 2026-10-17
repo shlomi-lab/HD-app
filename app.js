@@ -14,6 +14,7 @@
     { key: 'VPN', he: 'VPN', en: 'VPN (RRAS / SSTP / NPS)', icon: '🛡️', color: '#38bdf8' },
     { key: 'Firewall', he: 'חומת אש', en: 'Firewall (Check Point)', icon: '🧱', color: '#f87171' },
     { key: 'Backup', he: 'גיבוי', en: 'Backup (Veeam)', icon: '💾', color: '#c084fc' },
+    { key: 'macOS', he: 'macOS', en: 'macOS for Help Desk', icon: '🍎', color: '#e2e8f0' },
     { key: 'Build', he: 'בניית דומיין', en: 'Build a domain (lab)', icon: '🏗️', color: '#a3e635' },
     { key: 'Win+R', he: 'קיצורי Win+R', en: 'Run commands', icon: '⌨️', color: '#94a3b8' }
   ];
@@ -484,7 +485,7 @@
   // ---------- stuck wizard ----------
   var WHERE_CATS = {
     account: ['AD', 'GPO'],
-    workstation: ['System', 'Printers', 'Network', 'AD'],
+    workstation: ['System', 'Printers', 'Network', 'AD', 'macOS'],
     network: ['Network', 'DNS/DC', 'VPN', 'Firewall'],
     server: ['Remote Access', 'DNS/DC', 'AD', 'System', 'GPO', 'VPN', 'Firewall', 'Backup']
   };

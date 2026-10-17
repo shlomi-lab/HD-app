@@ -1,6 +1,6 @@
 /* Seed data for the helpdesk toolkit. Imported once into IndexedDB. */
-window.SEED_VERSION = 4;
-window.SEED_ADDED = {"2": ["build-00", "build-01", "build-02", "build-03", "build-04", "build-05", "build-06", "build-07", "build-08", "build-09", "build-10", "build-11", "build-12", "build-13", "build-14", "build-15", "build-16", "build-17", "build-18", "build-19", "build-20", "build-21"], "3": ["ra-rdp-orphan-session"], "4": ["ad-repl-8524", "ad-script-prepare-dc", "ad-script-join-domain", "ad-script-fix-locked", "gpo-share-drive-map", "gpo-ts-lockdown", "ra-rdp-group-access", "ra-duo-mfa-rdp", "vpn-sstp-rras-nps-setup", "vpn-0x80092013", "vpn-terminated-20271", "vpn-nps-invalid-client-13", "vpn-reason-66-eap", "vpn-nps-reason-codes", "vpn-stale-hosts-dns", "vpn-restart-dependent-timedout", "vpn-no-connection-checklist", "veeam-install-job", "veeam-restore-warnings", "cp-install-interfaces", "cp-policy-rules", "cp-read-logs", "cp-dmz-nat-portforward", "servers-behind-firewall"]};
+window.SEED_VERSION = 5;
+window.SEED_ADDED = {"2": ["build-00", "build-01", "build-02", "build-03", "build-04", "build-05", "build-06", "build-07", "build-08", "build-09", "build-10", "build-11", "build-12", "build-13", "build-14", "build-15", "build-16", "build-17", "build-18", "build-19", "build-20", "build-21"], "3": ["ra-rdp-orphan-session"], "4": ["ad-repl-8524", "ad-script-prepare-dc", "ad-script-join-domain", "ad-script-fix-locked", "gpo-share-drive-map", "gpo-ts-lockdown", "ra-rdp-group-access", "ra-duo-mfa-rdp", "vpn-sstp-rras-nps-setup", "vpn-0x80092013", "vpn-terminated-20271", "vpn-nps-invalid-client-13", "vpn-reason-66-eap", "vpn-nps-reason-codes", "vpn-stale-hosts-dns", "vpn-restart-dependent-timedout", "vpn-no-connection-checklist", "veeam-install-job", "veeam-restore-warnings", "cp-install-interfaces", "cp-policy-rules", "cp-read-logs", "cp-dmz-nat-portforward", "servers-behind-firewall"], "5": ["mac-net-info", "mac-net-tests", "mac-dns-flush", "mac-dns-proxy-set", "mac-wifi", "mac-network-reset", "mac-ports-connections", "mac-vpn-cli", "mac-smb-shares", "mac-ad-kerberos", "mac-accounts-passwords", "mac-filevault", "mac-keychain", "mac-sysinfo", "mac-disk-space", "mac-disk-repair", "mac-slow-performance", "mac-app-frozen", "mac-crash-logs", "mac-spotlight", "mac-gatekeeper-quarantine", "mac-privacy-permissions", "mac-updates", "mac-printers", "mac-bluetooth-audio", "mac-boot-recovery", "mac-mdm-profiles", "mac-remote-access", "mac-time-sync", "mac-time-machine", "mac-battery-hardware", "mac-outlook-office", "mac-terminal-toolkit", "mac-shortcuts", "mac-vs-windows-cheatsheet"]};
 window.SEED_ENTRIES = [
  {
   "id": "ad-lockout",
@@ -5690,6 +5690,2076 @@ window.SEED_ENTRIES = [
    "get-netneighbor",
    "הדרכה",
    "general"
+  ],
+  "createdAt": 1760600000000,
+  "updatedAt": 1760600000000
+ },
+ {
+  "id": "mac-net-info",
+  "titleHe": "macOS רשת: כתובת IP, שער, DNS וממשקים",
+  "titleEn": "macOS network info: IP, gateway, DNS, interfaces",
+  "category": "macOS",
+  "symptom": "צריך לדעת מה כתובת ה-Mac, מי ה-Gateway, ואילו שרתי DNS בשימוש. ב-Mac אין ipconfig כמו ב-Windows, והממשק הראשי הוא בדרך כלל en0.",
+  "commands": [
+   {
+    "label": "כתובת IP של Wi-Fi או Ethernet (בדוק en0, en1)",
+    "text": "ipconfig getifaddr en0"
+   },
+   {
+    "label": "כל הממשקים ושמות השירותים",
+    "text": "networksetup -listallhardwareports"
+   },
+   {
+    "label": "סדר שירותי הרשת",
+    "text": "networksetup -listnetworkserviceorder"
+   },
+   {
+    "label": "Gateway וממשק ברירת מחדל",
+    "text": "route -n get default"
+   },
+   {
+    "label": "טבלת ניתוב",
+    "text": "netstat -rn"
+   },
+   {
+    "label": "שרתי DNS בפועל (כולל per-domain)",
+    "text": "scutil --dns | head -40"
+   },
+   {
+    "label": "כל הפרטים של ממשק",
+    "text": "ifconfig en0"
+   },
+   {
+    "label": "כתובת MAC",
+    "text": "ifconfig en0 | grep ether"
+   },
+   {
+    "label": "הגדרות שירות (למשל Wi-Fi)",
+    "text": "networksetup -getinfo \"Wi-Fi\""
+   },
+   {
+    "label": "כתובת ציבורית",
+    "text": "curl -s https://ifconfig.me"
+   }
+  ],
+  "guiSteps": [
+   "System Settings ← Network ← בחר Wi-Fi או Ethernet ← Details ← TCP/IP ו-DNS.",
+   "Option+קליק על סמל ה-Wi-Fi בשורת התפריטים מציג IP, Router, BSSID, ערוץ ומהירות."
+  ],
+  "ifNotWorking": "אם אין IP (169.254.x.x): אין DHCP. בדוק כבל/Wi-Fi, ואז Details ← TCP/IP ← Renew DHCP Lease.",
+  "notes": "פקודות לפי macOS 14-15 (Sonoma/Sequoia); בגרסאות אחרות חלק מהשמות והנתיבים משתנים. פקודות עם sudo מבקשות סיסמת מנהל. בטרמינל של ה-Mac (Terminal).",
+  "tags": [
+   "ip",
+   "ipconfig",
+   "ifconfig",
+   "gateway",
+   "dns",
+   "network",
+   "רשת",
+   "mac address",
+   "mac",
+   "macos",
+   "apple"
+  ],
+  "createdAt": 1760600000000,
+  "updatedAt": 1760600000000
+ },
+ {
+  "id": "mac-net-tests",
+  "titleHe": "macOS בדיקות רשת: ping, פורט, DNS, traceroute, curl",
+  "titleEn": "macOS connectivity tests",
+  "category": "macOS",
+  "symptom": "אין חיבור, אתר לא נפתח, או שירות פנימי לא נגיש. סדר בדיקה: Gateway ← IP חיצוני ← DNS ← פורט ← אפליקציה.",
+  "commands": [
+   {
+    "label": "ping ל-Gateway (עצור עם Ctrl+C או -c)",
+    "text": "ping -c 4 <GATEWAY-IP>"
+   },
+   {
+    "label": "ping לאינטרנט (בלי DNS)",
+    "text": "ping -c 4 1.1.1.1"
+   },
+   {
+    "label": "ping עם שם (בודק DNS)",
+    "text": "ping -c 4 google.com"
+   },
+   {
+    "label": "בדיקת פורט TCP פתוח",
+    "text": "nc -vz <HOST> 443"
+   },
+   {
+    "label": "בדיקת פורט UDP",
+    "text": "nc -vzu <HOST> 53"
+   },
+   {
+    "label": "תשובת DNS מול שרת מסוים",
+    "text": "dig @<DNS-IP> <HOST>"
+   },
+   {
+    "label": "DNS בסיסי",
+    "text": "nslookup <HOST>"
+   },
+   {
+    "label": "רשומת MX / TXT",
+    "text": "dig <DOMAIN> MX +short"
+   },
+   {
+    "label": "מסלול לצומת",
+    "text": "traceroute -n 8.8.8.8"
+   },
+   {
+    "label": "כותרות HTTP (קוד תשובה)",
+    "text": "curl -I https://<HOST>"
+   },
+   {
+    "label": "זמני חיבור (DNS, חיבור, TLS)",
+    "text": "curl -o /dev/null -s -w \"dns:%{time_namelookup} connect:%{time_connect} tls:%{time_appconnect} total:%{time_total}\\n\" https://<HOST>"
+   },
+   {
+    "label": "בדיקת תעודה",
+    "text": "openssl s_client -connect <HOST>:443 -servername <HOST> </dev/null 2>/dev/null | openssl x509 -noout -subject -issuer -dates"
+   },
+   {
+    "label": "ARP: מי באותה רשת",
+    "text": "arp -a"
+   },
+   {
+    "label": "בדיקת איכות רשת מובנית",
+    "text": "networkQuality"
+   }
+  ],
+  "guiSteps": [
+   "Wireless Diagnostics: Option+קליק על Wi-Fi ← Open Wireless Diagnostics (לוגים וניתוח אות).",
+   "Network Utility כבר לא קיים. משתמשים בטרמינל או באפליקציות צד שלישי."
+  ],
+  "ifNotWorking": "ping IP עובד ושם לא: בעיית DNS (ראה flush DNS). עובד ל-IP ולא לאתר מסוים: חסימה בחומה או פרוקסי.",
+  "notes": "פקודות לפי macOS 14-15 (Sonoma/Sequoia); בגרסאות אחרות חלק מהשמות והנתיבים משתנים. פקודות עם sudo מבקשות סיסמת מנהל. בטרמינל של ה-Mac (Terminal).",
+  "tags": [
+   "ping",
+   "nc",
+   "netcat",
+   "dig",
+   "nslookup",
+   "traceroute",
+   "curl",
+   "openssl",
+   "בדיקות רשת",
+   "connectivity",
+   "mac",
+   "macos",
+   "apple"
+  ],
+  "createdAt": 1760600000000,
+  "updatedAt": 1760600000000
+ },
+ {
+  "id": "mac-dns-flush",
+  "titleHe": "macOS איפוס DNS cache",
+  "titleEn": "macOS flush DNS cache",
+  "category": "macOS",
+  "symptom": "אתר או שרת מתורגם לכתובת ישנה אחרי שינוי DNS. ב-Mac אין קאש כללי כמו ipconfig /flushdns, אלא איפוס שני רכיבים.",
+  "commands": [
+   {
+    "label": "איפוס (macOS 12 ומעלה)",
+    "text": "sudo dscacheutil -flushcache\nsudo killall -HUP mDNSResponder"
+   },
+   {
+    "label": "בדיקה מה Mac מתרגם",
+    "text": "dscacheutil -q host -a name <HOST>"
+   },
+   {
+    "label": "רשומת hosts",
+    "text": "grep -v \"^#\" /etc/hosts"
+   },
+   {
+    "label": "מי שרתי ה-DNS",
+    "text": "scutil --dns | grep nameserver"
+   }
+  ],
+  "guiSteps": [
+   "אחרי האיפוס: לנסות שוב. אם עדיין ישן, לבדוק /etc/hosts, VPN או פרוקסי.",
+   "דפדפן: Chrome מחזיק קאש משלו (chrome://net-internals/#dns)."
+  ],
+  "ifNotWorking": "אם הבעיה נשארת: להחליף DNS זמנית (networksetup -setdnsservers \"Wi-Fi\" 1.1.1.1) ולבדוק שוב.",
+  "notes": "פקודות לפי macOS 14-15 (Sonoma/Sequoia); בגרסאות אחרות חלק מהשמות והנתיבים משתנים. פקודות עם sudo מבקשות סיסמת מנהל. בטרמינל של ה-Mac (Terminal).",
+  "tags": [
+   "dns",
+   "flush",
+   "cache",
+   "mdnsresponder",
+   "dscacheutil",
+   "איפוס",
+   "mac",
+   "macos",
+   "apple"
+  ],
+  "createdAt": 1760600000000,
+  "updatedAt": 1760600000000
+ },
+ {
+  "id": "mac-dns-proxy-set",
+  "titleHe": "macOS שינוי DNS ופרוקסי מהטרמינל",
+  "titleEn": "macOS set DNS and proxy from CLI",
+  "category": "macOS",
+  "symptom": "צריך להגדיר DNS או פרוקסי בלי ללחוץ בממשק, או לבדוק מה מוגדר.",
+  "commands": [
+   {
+    "label": "DNS נוכחי לשירות",
+    "text": "networksetup -getdnsservers \"Wi-Fi\""
+   },
+   {
+    "label": "קביעת DNS",
+    "text": "sudo networksetup -setdnsservers \"Wi-Fi\" 1.1.1.1 8.8.8.8"
+   },
+   {
+    "label": "חזרה לברירת מחדל (DHCP)",
+    "text": "sudo networksetup -setdnsservers \"Wi-Fi\" Empty"
+   },
+   {
+    "label": "פרוקסי HTTP נוכחי",
+    "text": "networksetup -getwebproxy \"Wi-Fi\""
+   },
+   {
+    "label": "קביעת פרוקסי HTTP",
+    "text": "sudo networksetup -setwebproxy \"Wi-Fi\" <PROXY-HOST> <PORT>"
+   },
+   {
+    "label": "כיבוי פרוקסי",
+    "text": "sudo networksetup -setwebproxystate \"Wi-Fi\" off"
+   },
+   {
+    "label": "PAC/Auto proxy",
+    "text": "networksetup -getautoproxyurl \"Wi-Fi\""
+   },
+   {
+    "label": "רשימת שירותים (לשם המדויק)",
+    "text": "networksetup -listallnetworkservices"
+   }
+  ],
+  "guiSteps": [
+   "System Settings ← Network ← השירות ← Details ← DNS או Proxies."
+  ],
+  "ifNotWorking": "",
+  "notes": "פקודות לפי macOS 14-15 (Sonoma/Sequoia); בגרסאות אחרות חלק מהשמות והנתיבים משתנים. פקודות עם sudo מבקשות סיסמת מנהל. בטרמינל של ה-Mac (Terminal).",
+  "tags": [
+   "dns",
+   "proxy",
+   "פרוקסי",
+   "networksetup",
+   "mac",
+   "macos",
+   "apple"
+  ],
+  "createdAt": 1760600000000,
+  "updatedAt": 1760600000000
+ },
+ {
+  "id": "mac-wifi",
+  "titleHe": "macOS Wi-Fi: חיבור, אות, ושכחת רשת",
+  "titleEn": "macOS Wi-Fi troubleshooting",
+  "category": "macOS",
+  "symptom": "Wi-Fi איטי, מתנתק או לא מתחבר. הפקודה airport הוסרה ב-macOS 14.4 ומעלה, ולכן משתמשים ב-wdutil ו-networksetup.",
+  "commands": [
+   {
+    "label": "רשת נוכחית",
+    "text": "networksetup -getairportnetwork en0"
+   },
+   {
+    "label": "פרטי Wi-Fi מלאים (RSSI, ערוץ, רעש, BSSID)",
+    "text": "sudo wdutil info"
+   },
+   {
+    "label": "כיבוי והפעלה מחדש של Wi-Fi",
+    "text": "networksetup -setairportpower en0 off\nnetworksetup -setairportpower en0 on"
+   },
+   {
+    "label": "התחברות לרשת",
+    "text": "networksetup -setairportnetwork en0 \"<SSID>\" \"<PASSWORD>\""
+   },
+   {
+    "label": "רשימת רשתות שמורות",
+    "text": "networksetup -listpreferredwirelessnetworks en0"
+   },
+   {
+    "label": "שכחת רשת (להתחבר מחדש עם סיסמה חדשה)",
+    "text": "sudo networksetup -removepreferredwirelessnetwork en0 \"<SSID>\""
+   }
+  ],
+  "guiSteps": [
+   "איכות האות: RSSI טוב מ-(-60), גבולי (-70), חלש (-80). Noise נמוך מ-RSSI בהרבה (SNR מעל 25 טוב).",
+   "Option+קליק על Wi-Fi ← Open Wireless Diagnostics: Window ← Scan, Performance.",
+   "System Settings ← Wi-Fi ← Details ← Forget This Network, ואז התחברות מחדש.",
+   "Private Wi-Fi Address (MAC אקראי): מאפשר חסימה ב-MAC filter. System Settings ← Wi-Fi ← Details ← Private Wi-Fi address ← Off לרשת ארגונית אם צריך.",
+   "VPN/MDM Profile שומר Wi-Fi: Details ← אי אפשר למחוק, צריך להסיר מ-Profiles."
+  ],
+  "ifNotWorking": "אם עדיין לא מתחבר: ראה \"איפוס הגדרות רשת\" ו-Safe Mode.",
+  "notes": "ב-Wi-Fi ארגוני (802.1X) המשתמש מקבל אישור תעודה. תעודת RADIUS משתנה: \"Trust\" מחדש. פקודות לפי macOS 14-15 (Sonoma/Sequoia); בגרסאות אחרות חלק מהשמות והנתיבים משתנים. פקודות עם sudo מבקשות סיסמת מנהל. בטרמינל של ה-Mac (Terminal).",
+  "tags": [
+   "wifi",
+   "wi-fi",
+   "wdutil",
+   "airport",
+   "rssi",
+   "802.1x",
+   "wireless",
+   "אלחוטי",
+   "mac",
+   "macos",
+   "apple"
+  ],
+  "createdAt": 1760600000000,
+  "updatedAt": 1760600000000
+ },
+ {
+  "id": "mac-network-reset",
+  "titleHe": "macOS איפוס הגדרות רשת (מוצא אחרון)",
+  "titleEn": "macOS reset network configuration",
+  "category": "macOS",
+  "symptom": "כל הבעיות ברשת נשארות אחרי DNS, Wi-Fi והפעלה מחדש: ממשקים כפולים, סדר שירותים שבור, הגדרות רשת פגומות.",
+  "commands": [
+   {
+    "label": "גיבוי הקבצים לפני מחיקה",
+    "text": "sudo mkdir -p ~/netbackup && sudo cp /Library/Preferences/SystemConfiguration/*.plist ~/netbackup/"
+   },
+   {
+    "label": "הקבצים שנמחקים (לפי הדוקומנטציה הנפוצה)",
+    "text": "sudo rm /Library/Preferences/SystemConfiguration/com.apple.airport.preferences.plist\nsudo rm /Library/Preferences/SystemConfiguration/com.apple.network.eapolclient.configuration.plist\nsudo rm /Library/Preferences/SystemConfiguration/NetworkInterfaces.plist\nsudo rm /Library/Preferences/SystemConfiguration/preferences.plist"
+   },
+   {
+    "label": "אחרי המחיקה",
+    "text": "sudo reboot"
+   }
+  ],
+  "guiSteps": [
+   "מוחקים רק אחרי גיבוי. אחרי אתחול המערכת יוצרת הגדרות רשת חדשות, וצריך לחבר מחדש את ה-Wi-Fi ולבדוק VPN/פרוקסי.",
+   "חלופה בטוחה יותר: System Settings ← Network ← מחיקת שירות בעייתי ← ויצירתו מחדש (+)."
+  ],
+  "ifNotWorking": "",
+  "notes": "מוצא אחרון. בדוק שאין MDM Profile שמגדיר רשת, שלא יימחק. פקודות לפי macOS 14-15 (Sonoma/Sequoia); בגרסאות אחרות חלק מהשמות והנתיבים משתנים. פקודות עם sudo מבקשות סיסמת מנהל. בטרמינל של ה-Mac (Terminal).",
+  "tags": [
+   "network reset",
+   "איפוס רשת",
+   "preferences.plist",
+   "networkinterfaces",
+   "mac",
+   "macos",
+   "apple"
+  ],
+  "createdAt": 1760600000000,
+  "updatedAt": 1760600000000
+ },
+ {
+  "id": "mac-ports-connections",
+  "titleHe": "macOS מי מאזין על פורט ואילו חיבורים פתוחים",
+  "titleEn": "macOS listening ports and open connections",
+  "category": "macOS",
+  "symptom": "צריך לדעת איזה תהליך תופס פורט, או למה האפליקציה מתחברת החוצה.",
+  "commands": [
+   {
+    "label": "כל הפורטים המאזינים (TCP)",
+    "text": "sudo lsof -iTCP -sTCP:LISTEN -n -P"
+   },
+   {
+    "label": "מי תופס פורט מסוים",
+    "text": "sudo lsof -i :<PORT> -n -P"
+   },
+   {
+    "label": "חיבורים פעילים",
+    "text": "netstat -an | grep ESTABLISHED"
+   },
+   {
+    "label": "שימוש רשת חי לפי תהליך",
+    "text": "nettop -P -L 1"
+   },
+   {
+    "label": "סטטיסטיקה לפי ממשק",
+    "text": "netstat -i"
+   },
+   {
+    "label": "Firewall של Mac: מצב",
+    "text": "/usr/libexec/ApplicationFirewall/socketfilterfw --getglobalstate"
+   }
+  ],
+  "guiSteps": [
+   "System Settings ← Network ← Firewall.",
+   "Activity Monitor ← Network."
+  ],
+  "ifNotWorking": "",
+  "notes": "פקודות לפי macOS 14-15 (Sonoma/Sequoia); בגרסאות אחרות חלק מהשמות והנתיבים משתנים. פקודות עם sudo מבקשות סיסמת מנהל. בטרמינל של ה-Mac (Terminal).",
+  "tags": [
+   "port",
+   "lsof",
+   "netstat",
+   "nettop",
+   "firewall",
+   "listening",
+   "mac",
+   "macos",
+   "apple"
+  ],
+  "createdAt": 1760600000000,
+  "updatedAt": 1760600000000
+ },
+ {
+  "id": "mac-vpn-cli",
+  "titleHe": "macOS VPN: בדיקה והפעלה מהטרמינל",
+  "titleEn": "macOS VPN from CLI",
+  "category": "macOS",
+  "symptom": "VPN לא מתחבר או נתקע, ורוצים לבדוק או להפעיל אותו בלי הממשק.",
+  "commands": [
+   {
+    "label": "רשימת חיבורי VPN",
+    "text": "scutil --nc list"
+   },
+   {
+    "label": "מצב חיבור",
+    "text": "scutil --nc status \"<VPN-NAME>\""
+   },
+   {
+    "label": "הפעלה",
+    "text": "scutil --nc start \"<VPN-NAME>\""
+   },
+   {
+    "label": "כיבוי",
+    "text": "scutil --nc stop \"<VPN-NAME>\""
+   },
+   {
+    "label": "אחרי חיבור: האם הניתוב נכון",
+    "text": "netstat -rn | head -20"
+   },
+   {
+    "label": "שם VPN: האם מצביע לשרת הנכון",
+    "text": "scutil --nc show \"<VPN-NAME>\""
+   }
+  ],
+  "guiSteps": [
+   "System Settings ← VPN ← החיבור ← Connect.",
+   "ב-macOS יש תמיכה מובנית ב-IKEv2, L2TP/IPsec ו-Cisco IPSec. SSTP אינו נתמך מובנה ודורש אפליקציה של הספק.",
+   "VPN של Always-on או Profile מנוהל: מוגדר ב-MDM ולא מוסרים מהממשק."
+  ],
+  "ifNotWorking": "אחרי חיבור אין גישה לשרתים פנימיים: בדוק DNS פנימי (scutil --dns) וניתוב split-tunnel.",
+  "notes": "פקודות לפי macOS 14-15 (Sonoma/Sequoia); בגרסאות אחרות חלק מהשמות והנתיבים משתנים. פקודות עם sudo מבקשות סיסמת מנהל. בטרמינל של ה-Mac (Terminal).",
+  "tags": [
+   "vpn",
+   "scutil",
+   "ikev2",
+   "l2tp",
+   "tunnel",
+   "mac",
+   "macos",
+   "apple"
+  ],
+  "createdAt": 1760600000000,
+  "updatedAt": 1760600000000
+ },
+ {
+  "id": "mac-smb-shares",
+  "titleHe": "macOS חיבור לשיתוף SMB / שרת קבצים",
+  "titleEn": "macOS SMB share connection",
+  "category": "macOS",
+  "symptom": "צריך להתחבר לתיקייה משותפת של Windows, או שהחיבור נותק או לא נותן גישה.",
+  "commands": [
+   {
+    "label": "פתיחה בחלון Finder",
+    "text": "open \"smb://<FILE-SERVER>/<SHARE>\""
+   },
+   {
+    "label": "חיבור מהטרמינל",
+    "text": "mkdir -p ~/share && mount_smbfs \"//<DOMAIN>;<USER>@<FILE-SERVER>/<SHARE>\" ~/share"
+   },
+   {
+    "label": "ניתוק",
+    "text": "umount ~/share"
+   },
+   {
+    "label": "שיתופים פעילים",
+    "text": "smbutil statshares -a"
+   },
+   {
+    "label": "מה מוצמד כרגע",
+    "text": "mount | grep smbfs"
+   },
+   {
+    "label": "בדיקת פורט SMB",
+    "text": "nc -vz <FILE-SERVER> 445"
+   },
+   {
+    "label": "שרת בדומיין: בדיקת Kerberos",
+    "text": "klist"
+   }
+  ],
+  "guiSteps": [
+   "Finder ← Go ← Connect to Server (Cmd+K) ← smb://server/share.",
+   "לשמור סיסמה: סמן Remember this password in my keychain.",
+   "ניתוק קבוע: Finder ← סמל ה-Eject ליד השיתוף בסרגל הצד.",
+   "להפעלה בכניסה: System Settings ← General ← Login Items ← הוספת השיתוף."
+  ],
+  "ifNotWorking": "גישה נדחית: ודא שם משתמש בפורמט DOMAIN;user או user@domain.com, ושההרשאות (Share ו-NTFS) תקינות. חיבור איטי: בדוק קוד חתימה ב-SMB ו-VPN.",
+  "notes": "פקודות לפי macOS 14-15 (Sonoma/Sequoia); בגרסאות אחרות חלק מהשמות והנתיבים משתנים. פקודות עם sudo מבקשות סיסמת מנהל. בטרמינל של ה-Mac (Terminal).",
+  "tags": [
+   "smb",
+   "share",
+   "file server",
+   "שיתוף",
+   "mount_smbfs",
+   "finder",
+   "windows",
+   "mac",
+   "macos",
+   "apple"
+  ],
+  "createdAt": 1760600000000,
+  "updatedAt": 1760600000000
+ },
+ {
+  "id": "mac-ad-kerberos",
+  "titleHe": "macOS ו-AD: Kerberos, kinit ו-SSO",
+  "titleEn": "macOS with Active Directory: Kerberos and SSO",
+  "category": "macOS",
+  "symptom": "Mac בארגון עם AD מבקש סיסמה שוב ושוב, או שאין SSO לשרתי קבצים ולאתרים פנימיים.",
+  "commands": [
+   {
+    "label": "כרטיסי Kerberos פעילים",
+    "text": "klist"
+   },
+   {
+    "label": "קבלת כרטיס",
+    "text": "kinit <USER>@<DOMAIN.LOCAL>"
+   },
+   {
+    "label": "מחיקת כרטיסים (לבדיקה מחדש)",
+    "text": "kdestroy -a"
+   },
+   {
+    "label": "בדיקת AD Bind ישן (אם קיים)",
+    "text": "dsconfigad -show"
+   },
+   {
+    "label": "בדיקת חיפוש משתמש דרך AD",
+    "text": "dscl \"/Active Directory/<DOMAIN>/All Domains\" -read /Users/<USER>"
+   },
+   {
+    "label": "Kerberos SSO Extension (MDM)",
+    "text": "app-sso -l"
+   },
+   {
+    "label": "סטטוס Platform SSO / Entra",
+    "text": "app-sso platform -s"
+   }
+  ],
+  "guiSteps": [
+   "הצטרפות ישירה ל-AD (Directory Utility) מתיישנת. הדרך המודרנית: Kerberos SSO Extension או Platform SSO דרך MDM (Jamf, Intune, Kandji).",
+   "אם הסיסמה ב-AD השתנתה והמק לא מסונכרן: התנתק והתחבר, או שנה סיסמה ב-Mac כדי שה-Keychain יתעדכן.",
+   "Date/Time חייבים להיות מסונכרנים (פער מעל 5 דקות שובר Kerberos)."
+  ],
+  "ifNotWorking": "kinit נכשל: בדוק DNS של הדומיין (dig _kerberos._tcp.<DOMAIN>), זמן, ושם ה-Realm באותיות גדולות.",
+  "notes": "פקודות לפי macOS 14-15 (Sonoma/Sequoia); בגרסאות אחרות חלק מהשמות והנתיבים משתנים. פקודות עם sudo מבקשות סיסמת מנהל. בטרמינל של ה-Mac (Terminal).",
+  "tags": [
+   "ad",
+   "active directory",
+   "kerberos",
+   "kinit",
+   "klist",
+   "sso",
+   "dsconfigad",
+   "entra",
+   "platform sso",
+   "mac",
+   "macos",
+   "apple"
+  ],
+  "createdAt": 1760600000000,
+  "updatedAt": 1760600000000
+ },
+ {
+  "id": "mac-accounts-passwords",
+  "titleHe": "macOS חשבונות וסיסמאות: איפוס, מנהל ו-Secure Token",
+  "titleEn": "macOS accounts, password reset, Secure Token",
+  "category": "macOS",
+  "symptom": "משתמש שכח סיסמה, צריך להוסיף מנהל, או שמשתמש לא מצליח לפתוח FileVault.",
+  "commands": [
+   {
+    "label": "רשימת משתמשים",
+    "text": "dscl . -list /Users | grep -v \"^_\""
+   },
+   {
+    "label": "משתמש מנהל? (admin)",
+    "text": "dscl . -read /Groups/admin GroupMembership"
+   },
+   {
+    "label": "איפוס סיסמה (בלי למחוק)",
+    "text": "sudo sysadminctl -resetPasswordFor <USER> -newPassword <NEW> -adminUser <ADMIN> -adminPassword -"
+   },
+   {
+    "label": "הוספת מנהל",
+    "text": "sudo dseditgroup -o edit -a <USER> -t user admin"
+   },
+   {
+    "label": "הסרת מנהל",
+    "text": "sudo dseditgroup -o edit -d <USER> -t user admin"
+   },
+   {
+    "label": "Secure Token של משתמש",
+    "text": "sysadminctl -secureTokenStatus <USER>"
+   },
+   {
+    "label": "משתמשי FileVault (APFS)",
+    "text": "diskutil apfs listUsers /"
+   },
+   {
+    "label": "נעילת משתמש",
+    "text": "sudo pwpolicy -u <USER> -getpolicy"
+   }
+  ],
+  "guiSteps": [
+   "System Settings ← Users & Groups ← המשתמש ← Reset Password (דורש מנהל).",
+   "כשל כניסה: לחצו על סימן השאלה/Forgot password במסך הכניסה, ואפשר להשתמש ב-Apple ID או במפתח FileVault.",
+   "Recovery: Options ← Utilities ← Terminal ← resetpassword (אפשרות לאפס דרך Apple ID).",
+   "למשתמש חדש במחשב עם FileVault: רק משתמש עם Secure Token יכול לפתוח את הדיסק. מנהל ראשון מקבל אוטומטית, אחרים צריכים הענקה."
+  ],
+  "ifNotWorking": "סיסמת כניסה ו-Keychain לא מסונכרנות אחרי איפוס: ה-Keychain עדיין עם הסיסמה הישנה. ראה \"Keychain\".",
+  "notes": "איפוס דרך Recovery או sysadminctl לא מעדכן את ה-Login Keychain. המשתמש יקבל בקשות סיסמה ל-Keychain. פקודות לפי macOS 14-15 (Sonoma/Sequoia); בגרסאות אחרות חלק מהשמות והנתיבים משתנים. פקודות עם sudo מבקשות סיסמת מנהל. בטרמינל של ה-Mac (Terminal).",
+  "tags": [
+   "password",
+   "סיסמה",
+   "sysadminctl",
+   "secure token",
+   "admin",
+   "user",
+   "dscl",
+   "reset",
+   "mac",
+   "macos",
+   "apple"
+  ],
+  "createdAt": 1760600000000,
+  "updatedAt": 1760600000000
+ },
+ {
+  "id": "mac-filevault",
+  "titleHe": "macOS FileVault: סטטוס ומפתח שחזור",
+  "titleEn": "macOS FileVault status and recovery key",
+  "category": "macOS",
+  "symptom": "צריך לבדוק שהדיסק מוצפן (דרישת ארגון/ISO), או שאבד מפתח שחזור.",
+  "commands": [
+   {
+    "label": "סטטוס",
+    "text": "fdesetup status"
+   },
+   {
+    "label": "מי יכול לפתוח את הדיסק",
+    "text": "sudo fdesetup list"
+   },
+   {
+    "label": "הפעלה (עם מפתח שחזור אישי)",
+    "text": "sudo fdesetup enable"
+   },
+   {
+    "label": "מפתח שחזור חדש",
+    "text": "sudo fdesetup changerecovery -personal"
+   },
+   {
+    "label": "בדיקת מפתח",
+    "text": "sudo fdesetup validaterecovery"
+   },
+   {
+    "label": "התקדמות הצפנה",
+    "text": "diskutil apfs list | grep -i \"FileVault\""
+   }
+  ],
+  "guiSteps": [
+   "System Settings ← Privacy & Security ← FileVault.",
+   "ארגון עם MDM: המפתח נשמר ב-MDM (Jamf, Intune). למצוא שם ולא ב-Apple ID.",
+   "שמור את מפתח השחזור מחוץ ל-Mac. בלי מפתח ובלי סיסמה אין שחזור."
+  ],
+  "ifNotWorking": "",
+  "notes": "לא פותחים את הדיסק בלי סיסמה או מפתח שחזור: זה הרעיון של ההצפנה. פקודות לפי macOS 14-15 (Sonoma/Sequoia); בגרסאות אחרות חלק מהשמות והנתיבים משתנים. פקודות עם sudo מבקשות סיסמת מנהל. בטרמינל של ה-Mac (Terminal).",
+  "tags": [
+   "filevault",
+   "encryption",
+   "הצפנה",
+   "recovery key",
+   "fdesetup",
+   "bitlocker",
+   "mac",
+   "macos",
+   "apple"
+  ],
+  "createdAt": 1760600000000,
+  "updatedAt": 1760600000000
+ },
+ {
+  "id": "mac-keychain",
+  "titleHe": "macOS Keychain: בקשות סיסמה חוזרות ואיפוס",
+  "titleEn": "macOS Keychain prompts and reset",
+  "category": "macOS",
+  "symptom": "המק מבקש שוב ושוב סיסמת Keychain אחרי שינוי סיסמה, או שאפליקציות (Outlook, Wi-Fi) לא זוכרות כניסה.",
+  "commands": [
+   {
+    "label": "רשימת Keychains",
+    "text": "security list-keychains"
+   },
+   {
+    "label": "ברירת מחדל",
+    "text": "security default-keychain"
+   },
+   {
+    "label": "נעילה/פתיחה",
+    "text": "security unlock-keychain ~/Library/Keychains/login.keychain-db"
+   },
+   {
+    "label": "חיפוש רשומה",
+    "text": "security find-generic-password -s \"<SERVICE>\""
+   },
+   {
+    "label": "מחיקת רשומה פגומה",
+    "text": "security delete-generic-password -s \"<SERVICE>\""
+   }
+  ],
+  "guiSteps": [
+   "Keychain Access ← login ← קליק ימני ← Change Password for Keychain \"login\" ← הסיסמה הישנה והחדשה (אחרי איפוס סיסמה מ-Recovery).",
+   "Keychain Access ← Settings ← Reset My Default Keychains (מוחק את כל הסיסמאות השמורות!). רק כשהסיסמה הישנה לא ידועה.",
+   "אפליקציית Microsoft Office: למחוק רשומות com.microsoft.* / adal / Microsoft Office Identities ב-Keychain, ולהתחבר מחדש."
+  ],
+  "ifNotWorking": "",
+  "notes": "גיבוי: Time Machine או iCloud Keychain לפני איפוס. פקודות לפי macOS 14-15 (Sonoma/Sequoia); בגרסאות אחרות חלק מהשמות והנתיבים משתנים. פקודות עם sudo מבקשות סיסמת מנהל. בטרמינל של ה-Mac (Terminal).",
+  "tags": [
+   "keychain",
+   "password prompt",
+   "security",
+   "סיסמה",
+   "login keychain",
+   "mac",
+   "macos",
+   "apple"
+  ],
+  "createdAt": 1760600000000,
+  "updatedAt": 1760600000000
+ },
+ {
+  "id": "mac-sysinfo",
+  "titleHe": "macOS מידע מערכת: גרסה, חומרה, סידורי, דיסק",
+  "titleEn": "macOS system info",
+  "category": "macOS",
+  "symptom": "פתיחת קריאה או מלאי: צריך גרסת מערכת, דגם, Serial, זיכרון ומעבד.",
+  "commands": [
+   {
+    "label": "גרסת macOS ו-Build",
+    "text": "sw_vers"
+   },
+   {
+    "label": "דגם, מעבד, זיכרון, Serial",
+    "text": "system_profiler SPHardwareDataType"
+   },
+   {
+    "label": "Serial בלבד",
+    "text": "system_profiler SPHardwareDataType | awk '/Serial/ {print $4}'"
+   },
+   {
+    "label": "שם מחשב",
+    "text": "scutil --get ComputerName; scutil --get LocalHostName"
+   },
+   {
+    "label": "ארכיטקטורה (arm64 או x86_64)",
+    "text": "uname -m"
+   },
+   {
+    "label": "שם המעבד",
+    "text": "sysctl -n machdep.cpu.brand_string"
+   },
+   {
+    "label": "זמן פעולה",
+    "text": "uptime"
+   },
+   {
+    "label": "דיסקים",
+    "text": "diskutil list"
+   },
+   {
+    "label": "מקום פנוי",
+    "text": "df -h /"
+   },
+   {
+    "label": "כל הדוח",
+    "text": "system_profiler -detailLevel mini > ~/Desktop/sysinfo.txt"
+   }
+  ],
+  "guiSteps": [
+   "Apple menu ← About This Mac ← More Info.",
+   "Option+Apple menu ← System Information."
+  ],
+  "ifNotWorking": "",
+  "notes": "פקודות לפי macOS 14-15 (Sonoma/Sequoia); בגרסאות אחרות חלק מהשמות והנתיבים משתנים. פקודות עם sudo מבקשות סיסמת מנהל. בטרמינל של ה-Mac (Terminal).",
+  "tags": [
+   "sysinfo",
+   "serial",
+   "sw_vers",
+   "system_profiler",
+   "hardware",
+   "מלאי",
+   "inventory",
+   "mac",
+   "macos",
+   "apple"
+  ],
+  "createdAt": 1760600000000,
+  "updatedAt": 1760600000000
+ },
+ {
+  "id": "mac-disk-space",
+  "titleHe": "macOS הדיסק מלא: מציאת תפוסה וניקוי",
+  "titleEn": "macOS disk full: find and free space",
+  "category": "macOS",
+  "symptom": "המק מודיע \"disk almost full\", עדכון נכשל או איטי. לעיתים Time Machine Local Snapshots תופסים עשרות GB.",
+  "commands": [
+   {
+    "label": "מקום פנוי",
+    "text": "df -h /"
+   },
+   {
+    "label": "תיקיות גדולות בבית",
+    "text": "du -sh ~/* 2>/dev/null | sort -rh | head -15"
+   },
+   {
+    "label": "תיקיית Library",
+    "text": "du -sh ~/Library/* 2>/dev/null | sort -rh | head -10"
+   },
+   {
+    "label": "תמונות ממצב Time Machine",
+    "text": "tmutil listlocalsnapshots /"
+   },
+   {
+    "label": "מחיקת תמונת מצב",
+    "text": "sudo tmutil deletelocalsnapshots <DATE>"
+   },
+   {
+    "label": "פירוט נפחי APFS",
+    "text": "diskutil apfs list"
+   },
+   {
+    "label": "קבצים מעל 1GB",
+    "text": "sudo find / -xdev -type f -size +1G -exec ls -lh {} \\; 2>/dev/null"
+   }
+  ],
+  "guiSteps": [
+   "System Settings ← General ← Storage ← המלצות ו-Remove.",
+   "Empty Trash, ניקוי Downloads, ונקודות שטח \"System Data\": לוגים, קאש, snapshots.",
+   "אפליקציות Xcode / Docker / Parallels לרוב הגדולות: ~/Library/Developer, ~/Library/Containers."
+  ],
+  "ifNotWorking": "",
+  "notes": "\"System Data\" ענק: בדוק tmutil listlocalsnapshots ו-~/Library/Caches. אל תמחק ידנית ב-/System או /private/var. פקודות לפי macOS 14-15 (Sonoma/Sequoia); בגרסאות אחרות חלק מהשמות והנתיבים משתנים. פקודות עם sudo מבקשות סיסמת מנהל. בטרמינל של ה-Mac (Terminal).",
+  "tags": [
+   "disk",
+   "storage",
+   "דיסק מלא",
+   "space",
+   "tmutil",
+   "snapshots",
+   "du",
+   "df",
+   "mac",
+   "macos",
+   "apple"
+  ],
+  "createdAt": 1760600000000,
+  "updatedAt": 1760600000000
+ },
+ {
+  "id": "mac-disk-repair",
+  "titleHe": "macOS תיקון דיסק: First Aid ו-diskutil",
+  "titleEn": "macOS disk repair: First Aid and diskutil",
+  "category": "macOS",
+  "symptom": "המק קופא, שגיאות בקבצים, או לא עולה. נבדקות מערכת קבצים APFS ומחיצות.",
+  "commands": [
+   {
+    "label": "אימות volume",
+    "text": "diskutil verifyVolume /"
+   },
+   {
+    "label": "תיקון volume",
+    "text": "diskutil repairVolume /"
+   },
+   {
+    "label": "אימות דיסק",
+    "text": "diskutil verifyDisk disk0"
+   },
+   {
+    "label": "מצב SMART (לדיסקים שתומכים)",
+    "text": "diskutil info disk0 | grep -i smart"
+   },
+   {
+    "label": "רשימת מחיצות",
+    "text": "diskutil list"
+   },
+   {
+    "label": "Mount ידני",
+    "text": "diskutil mount disk3s1"
+   }
+  ],
+  "guiSteps": [
+   "Disk Utility ← בחירת Volume ← First Aid ← Run (קודם ה-Data, אחר כך Macintosh HD, ובסוף הדיסק הפיזי).",
+   "אם המק לא עולה: Recovery ← Disk Utility ← First Aid.",
+   "סימנים לדיסק פיזי גוסס: First Aid נכשל, קבצים נעלמים, איטיות קיצונית. לגבות מיד."
+  ],
+  "ifNotWorking": "",
+  "notes": "Apple Silicon: אין fsck ב-Single user. תיקונים רק מ-Recovery. פקודות לפי macOS 14-15 (Sonoma/Sequoia); בגרסאות אחרות חלק מהשמות והנתיבים משתנים. פקודות עם sudo מבקשות סיסמת מנהל. בטרמינל של ה-Mac (Terminal).",
+  "tags": [
+   "disk",
+   "first aid",
+   "diskutil",
+   "apfs",
+   "repair",
+   "smart",
+   "תיקון דיסק",
+   "mac",
+   "macos",
+   "apple"
+  ],
+  "createdAt": 1760600000000,
+  "updatedAt": 1760600000000
+ },
+ {
+  "id": "mac-slow-performance",
+  "titleHe": "macOS איטי, מאוורר רועש, מעבד גבוה",
+  "titleEn": "macOS slow, loud fan, high CPU",
+  "category": "macOS",
+  "symptom": "המק איטי, מתחמם או שהמאוורר רועש. לרוב תהליך שרץ ב-CPU גבוה, זיכרון מלא, Spotlight שמאנדקס, או Login Items.",
+  "commands": [
+   {
+    "label": "תהליכים לפי CPU (תמונת מצב)",
+    "text": "top -o cpu -l 1 -n 10 | head -25"
+   },
+   {
+    "label": "לפי זיכרון",
+    "text": "top -o mem -l 1 -n 10 | head -25"
+   },
+   {
+    "label": "לחץ זיכרון",
+    "text": "memory_pressure"
+   },
+   {
+    "label": "Swap בשימוש",
+    "text": "sysctl vm.swapusage"
+   },
+   {
+    "label": "Load Average",
+    "text": "uptime"
+   },
+   {
+    "label": "תהליכי אינדוקס",
+    "text": "ps aux | grep -E \"mds|mdworker|photoanalysisd\" | grep -v grep"
+   },
+   {
+    "label": "התפלגות עומס בדקה",
+    "text": "sudo powermetrics --samplers cpu_power -i 1000 -n 1"
+   }
+  ],
+  "guiSteps": [
+   "Activity Monitor: CPU, Memory (Memory Pressure ירוק/צהוב/אדום), Energy, Disk.",
+   "System Settings ← General ← Login Items & Extensions: להסיר מיותרים.",
+   "ראה אם עדכון macOS או Time Machine או Photos רצים ברקע.",
+   "מכשיר ישן (Intel) מתחמם: בדוק אבק, חומר תרמי, ו-Chrome עם הרבה לשוניות.",
+   "סגירה והפעלה מחדש: אם לא הופעל מעל 2-3 שבועות."
+  ],
+  "ifNotWorking": "אם הלחץ זיכרון אדום תמיד: חסר RAM. אם דיסק מלא: ראה \"הדיסק מלא\".",
+  "notes": "פקודות לפי macOS 14-15 (Sonoma/Sequoia); בגרסאות אחרות חלק מהשמות והנתיבים משתנים. פקודות עם sudo מבקשות סיסמת מנהל. בטרמינל של ה-Mac (Terminal).",
+  "tags": [
+   "slow",
+   "איטי",
+   "cpu",
+   "memory",
+   "fan",
+   "top",
+   "activity monitor",
+   "performance",
+   "mac",
+   "macos",
+   "apple"
+  ],
+  "createdAt": 1760600000000,
+  "updatedAt": 1760600000000
+ },
+ {
+  "id": "mac-app-frozen",
+  "titleHe": "macOS אפליקציה קפואה: Force Quit והריגת תהליך",
+  "titleEn": "macOS frozen app: force quit",
+  "category": "macOS",
+  "symptom": "אפליקציה לא מגיבה (כדור מסתובב) או לא נסגרת.",
+  "commands": [
+   {
+    "label": "מציאת PID",
+    "text": "pgrep -il \"<APP>\""
+   },
+   {
+    "label": "סגירה עדינה",
+    "text": "killall \"<APP>\""
+   },
+   {
+    "label": "הריגה כפויה",
+    "text": "killall -9 \"<APP>\""
+   },
+   {
+    "label": "הריגה לפי PID",
+    "text": "kill -9 <PID>"
+   },
+   {
+    "label": "הפעלה מחדש של Finder",
+    "text": "killall Finder"
+   },
+   {
+    "label": "הפעלה מחדש של Dock",
+    "text": "killall Dock"
+   },
+   {
+    "label": "הפעלה מחדש של שורת התפריטים",
+    "text": "killall SystemUIServer"
+   },
+   {
+    "label": "ריענון ממשק גרפי (הכי הרבה אפליקציות)",
+    "text": "sudo killall -HUP WindowServer"
+   }
+  ],
+  "guiSteps": [
+   "Cmd+Option+Esc ← בחירת האפליקציה ← Force Quit.",
+   "Apple menu ← Force Quit.",
+   "Activity Monitor ← התהליך ← X ← Force Quit.",
+   "אחרי Force Quit: לפתוח מחדש. אם קורס שוב, למחוק את קובצי ה-Preferences שלה (~/Library/Preferences/<bundle>.plist)."
+  ],
+  "ifNotWorking": "WindowServer HUP מנתק את כל המשתמש (כניסה מחדש). רק כשהמסך קפוא.",
+  "notes": "פקודות לפי macOS 14-15 (Sonoma/Sequoia); בגרסאות אחרות חלק מהשמות והנתיבים משתנים. פקודות עם sudo מבקשות סיסמת מנהל. בטרמינל של ה-Mac (Terminal).",
+  "tags": [
+   "force quit",
+   "frozen",
+   "killall",
+   "kill",
+   "קפוא",
+   "not responding",
+   "dock",
+   "finder",
+   "mac",
+   "macos",
+   "apple"
+  ],
+  "createdAt": 1760600000000,
+  "updatedAt": 1760600000000
+ },
+ {
+  "id": "mac-crash-logs",
+  "titleHe": "macOS לוגים וקריסות: log, Console ו-sysdiagnose",
+  "titleEn": "macOS logs and crash reports",
+  "category": "macOS",
+  "symptom": "צריך להבין למה אפליקציה קורסת או למה המק קפא/התאתחל (Kernel Panic).",
+  "commands": [
+   {
+    "label": "לוג חי",
+    "text": "log stream --level info"
+   },
+   {
+    "label": "לוג של תהליך",
+    "text": "log stream --predicate 'process == \"<APP>\"'"
+   },
+   {
+    "label": "שעה אחרונה, שגיאות",
+    "text": "log show --last 1h --predicate 'eventMessage CONTAINS[c] \"error\"' --style compact | tail -50"
+   },
+   {
+    "label": "לוג של כשל התחברות/אימות",
+    "text": "log show --last 30m --predicate 'process == \"opendirectoryd\"' --style compact | tail -50"
+   },
+   {
+    "label": "דוחות קריסה",
+    "text": "ls -lt ~/Library/Logs/DiagnosticReports | head"
+   },
+   {
+    "label": "דוחות מערכת (Kernel Panic)",
+    "text": "ls -lt /Library/Logs/DiagnosticReports | head"
+   },
+   {
+    "label": "אסוף את הכל לצורך תמיכה",
+    "text": "sudo sysdiagnose"
+   }
+  ],
+  "guiSteps": [
+   "Console.app: בחר את המק ← חפש לפי תהליך, או Crash Reports.",
+   "Kernel Panic: \"Your computer restarted because of a problem\". לבדוק את הדוח, לשלול הרחבות/חומרה חיצונית, ולעדכן.",
+   "ב-macOS החדש אין /var/log/system.log. משתמשים ב-log."
+  ],
+  "ifNotWorking": "",
+  "notes": "פקודות לפי macOS 14-15 (Sonoma/Sequoia); בגרסאות אחרות חלק מהשמות והנתיבים משתנים. פקודות עם sudo מבקשות סיסמת מנהל. בטרמינל של ה-Mac (Terminal).",
+  "tags": [
+   "logs",
+   "log show",
+   "console",
+   "crash",
+   "kernel panic",
+   "sysdiagnose",
+   "diagnosticreports",
+   "mac",
+   "macos",
+   "apple"
+  ],
+  "createdAt": 1760600000000,
+  "updatedAt": 1760600000000
+ },
+ {
+  "id": "mac-spotlight",
+  "titleHe": "macOS Spotlight לא מוצא או איטי: אינדוקס מחדש",
+  "titleEn": "macOS Spotlight reindex",
+  "category": "macOS",
+  "symptom": "חיפוש לא מוצא קבצים, Mail/Outlook לא מחפש, או mds_stores צורך CPU.",
+  "commands": [
+   {
+    "label": "מצב אינדוקס",
+    "text": "mdutil -s /"
+   },
+   {
+    "label": "אינדוקס מחדש (מחיקת ה-Index)",
+    "text": "sudo mdutil -E /"
+   },
+   {
+    "label": "כיבוי והפעלה",
+    "text": "sudo mdutil -i off /\nsudo mdutil -i on /"
+   },
+   {
+    "label": "בדיקת חיפוש",
+    "text": "mdfind -name \"<FILE>\""
+   }
+  ],
+  "guiSteps": [
+   "System Settings ← Siri & Spotlight ← Search Results: לוודא שהקטגוריות מופעלות.",
+   "Spotlight Privacy: להסיר ולהוסיף מחדש את הדיסק/תיקייה.",
+   "אינדוקס מחדש לוקח שעות, וה-Mac יהיה איטי בזמן הזה."
+  ],
+  "ifNotWorking": "",
+  "notes": "פקודות לפי macOS 14-15 (Sonoma/Sequoia); בגרסאות אחרות חלק מהשמות והנתיבים משתנים. פקודות עם sudo מבקשות סיסמת מנהל. בטרמינל של ה-Mac (Terminal).",
+  "tags": [
+   "spotlight",
+   "mdutil",
+   "mdfind",
+   "search",
+   "index",
+   "חיפוש",
+   "mac",
+   "macos",
+   "apple"
+  ],
+  "createdAt": 1760600000000,
+  "updatedAt": 1760600000000
+ },
+ {
+  "id": "mac-gatekeeper-quarantine",
+  "titleHe": "macOS \"לא ניתן לפתוח\" - Gatekeeper ואפליקציות חסומות",
+  "titleEn": "macOS Gatekeeper and blocked apps",
+  "category": "macOS",
+  "symptom": "\"App can't be opened because Apple cannot check it for malicious software\" או \"damaged and can't be opened\". לפעמים אפליקציה נחסמת אחרי הורדה.",
+  "commands": [
+   {
+    "label": "מצב Gatekeeper",
+    "text": "spctl --status"
+   },
+   {
+    "label": "בדיקה אם האפליקציה חתומה/מאושרת",
+    "text": "spctl --assess --verbose /Applications/<APP>.app"
+   },
+   {
+    "label": "חתימה",
+    "text": "codesign -dv --verbose=4 /Applications/<APP>.app"
+   },
+   {
+    "label": "רק אחרי שמוודאים שהמקור בטוח: הסרת Quarantine",
+    "text": "xattr -d com.apple.quarantine /Applications/<APP>.app"
+   },
+   {
+    "label": "רשימת תכונות מורחבות",
+    "text": "xattr -l /Applications/<APP>.app"
+   }
+  ],
+  "guiSteps": [
+   "System Settings ← Privacy & Security ← למטה: \"<APP> was blocked\" ← Open Anyway.",
+   "Finder ← קליק ימני על האפליקציה ← Open ← Open (עוקף פעם אחת).",
+   "Mac ארגוני: אפליקציות מותרות דרך MDM. לא עוקפים Gatekeeper בלי אישור IT."
+  ],
+  "ifNotWorking": "חסימה אחרי שהורדה מהאתר הרשמי: הורד מחדש. אם \"damaged\": הורדה פגומה או חתימה פגה.",
+  "notes": "אל תריץ xattr -d על תוכנה לא ידועה. זה בדיוק הבדיקה שמגנה. פקודות לפי macOS 14-15 (Sonoma/Sequoia); בגרסאות אחרות חלק מהשמות והנתיבים משתנים. פקודות עם sudo מבקשות סיסמת מנהל. בטרמינל של ה-Mac (Terminal).",
+  "tags": [
+   "gatekeeper",
+   "quarantine",
+   "xattr",
+   "spctl",
+   "blocked app",
+   "חסום",
+   "unidentified developer",
+   "mac",
+   "macos",
+   "apple"
+  ],
+  "createdAt": 1760600000000,
+  "updatedAt": 1760600000000
+ },
+ {
+  "id": "mac-privacy-permissions",
+  "titleHe": "macOS הרשאות פרטיות (TCC): מצלמה, מיקרופון, Full Disk Access",
+  "titleEn": "macOS privacy permissions (TCC)",
+  "category": "macOS",
+  "symptom": "אפליקציה (Zoom, Teams, Terminal, סקריפט) לא מקבלת מצלמה, מיקרופון, שיתוף מסך, או גישה לקבצים.",
+  "commands": [
+   {
+    "label": "איפוס הרשאה לכל האפליקציות (מצלמה)",
+    "text": "tccutil reset Camera"
+   },
+   {
+    "label": "איפוס מיקרופון",
+    "text": "tccutil reset Microphone"
+   },
+   {
+    "label": "איפוס שיתוף מסך",
+    "text": "tccutil reset ScreenCapture"
+   },
+   {
+    "label": "איפוס לאפליקציה אחת",
+    "text": "tccutil reset All <BUNDLE-ID>"
+   },
+   {
+    "label": "מציאת Bundle ID",
+    "text": "osascript -e 'id of app \"<APP>\"'"
+   },
+   {
+    "label": "איפוס Full Disk Access",
+    "text": "tccutil reset SystemPolicyAllFiles"
+   }
+  ],
+  "guiSteps": [
+   "System Settings ← Privacy & Security ← Camera / Microphone / Screen & System Audio Recording / Full Disk Access / Accessibility.",
+   "להפעיל את האפליקציה ברשימה, וכשמבקש, לסגור ולפתוח אותה מחדש.",
+   "האפליקציה לא ברשימה: להפעיל אותה כדי שתבקש הרשאה (ואז תופיע), או tccutil reset ולנסות שוב.",
+   "ב-Mac מנוהל: הרשאות מסוימות מוענקות מראש ב-MDM (PPPC profile)."
+  ],
+  "ifNotWorking": "",
+  "notes": "שינוי ב-Full Disk Access וב-Screen Recording דורש לפעמים סגירה והפעלה מחדש של האפליקציה. פקודות לפי macOS 14-15 (Sonoma/Sequoia); בגרסאות אחרות חלק מהשמות והנתיבים משתנים. פקודות עם sudo מבקשות סיסמת מנהל. בטרמינל של ה-Mac (Terminal).",
+  "tags": [
+   "tcc",
+   "permissions",
+   "privacy",
+   "camera",
+   "microphone",
+   "screen recording",
+   "full disk access",
+   "tccutil",
+   "mac",
+   "macos",
+   "apple"
+  ],
+  "createdAt": 1760600000000,
+  "updatedAt": 1760600000000
+ },
+ {
+  "id": "mac-updates",
+  "titleHe": "macOS עדכונים: softwareupdate ו-Rosetta",
+  "titleEn": "macOS updates: softwareupdate and Rosetta",
+  "category": "macOS",
+  "symptom": "עדכון macOS נתקע, לא מציע, או שצריך להתקין Rosetta/עדכוני אבטחה מהטרמינל.",
+  "commands": [
+   {
+    "label": "עדכונים זמינים",
+    "text": "softwareupdate --list"
+   },
+   {
+    "label": "התקנת הכל",
+    "text": "sudo softwareupdate --install --all"
+   },
+   {
+    "label": "התקנת עדכון מסוים",
+    "text": "sudo softwareupdate --install \"<LABEL>\""
+   },
+   {
+    "label": "Rosetta 2 (Apple Silicon, לאפליקציות Intel)",
+    "text": "sudo softwareupdate --install-rosetta --agree-to-license"
+   },
+   {
+    "label": "רשימת התקנות",
+    "text": "softwareupdate --history"
+   },
+   {
+    "label": "מקום פנוי לעדכון",
+    "text": "df -h /"
+   }
+  ],
+  "guiSteps": [
+   "System Settings ← General ← Software Update.",
+   "עדכון נתקע: להמתין, לבדוק מקום פנוי, להפעיל מחדש ולנסות שוב. אם נשאר: Safe Mode או Recovery ← Reinstall macOS (לא מוחק נתונים).",
+   "Mac מנוהל: ה-MDM עשוי לדחות עדכונים או לחייב מועד. פנה למנהל."
+  ],
+  "ifNotWorking": "עדכון נכשל \"Not enough space\": ראה \"הדיסק מלא\". דורש לפחות 20-30GB בדרך כלל.",
+  "notes": "פקודות לפי macOS 14-15 (Sonoma/Sequoia); בגרסאות אחרות חלק מהשמות והנתיבים משתנים. פקודות עם sudo מבקשות סיסמת מנהל. בטרמינל של ה-Mac (Terminal).",
+  "tags": [
+   "update",
+   "עדכון",
+   "softwareupdate",
+   "rosetta",
+   "ventura",
+   "sonoma",
+   "sequoia",
+   "mac",
+   "macos",
+   "apple"
+  ],
+  "createdAt": 1760600000000,
+  "updatedAt": 1760600000000
+ },
+ {
+  "id": "mac-printers",
+  "titleHe": "macOS מדפסות: CUPS, תור הדפסה ואיפוס",
+  "titleEn": "macOS printers and CUPS",
+  "category": "macOS",
+  "symptom": "המדפסת לא מדפיסה, תור תקוע, או המדפסת מוצגת Offline.",
+  "commands": [
+   {
+    "label": "מדפסות ומצב",
+    "text": "lpstat -p -d"
+   },
+   {
+    "label": "כתובות (URI)",
+    "text": "lpstat -v"
+   },
+   {
+    "label": "תור הדפסה",
+    "text": "lpq"
+   },
+   {
+    "label": "ביטול כל העבודות",
+    "text": "cancel -a"
+   },
+   {
+    "label": "הפעלה מחדש של CUPS",
+    "text": "sudo launchctl kickstart -k system/org.cups.cupsd"
+   },
+   {
+    "label": "הפעלת ממשק ניהול (כבה בסוף)",
+    "text": "cupsctl WebInterface=yes"
+   },
+   {
+    "label": "הסרת מדפסת",
+    "text": "sudo lpadmin -x \"<PRINTER>\""
+   },
+   {
+    "label": "בדיקת פורט מדפסת IP",
+    "text": "nc -vz <PRINTER-IP> 9100"
+   }
+  ],
+  "guiSteps": [
+   "System Settings ← Printers & Scanners ← קליק ימני על הרשימה ← Reset printing system (מוחק את כל המדפסות).",
+   "להוסיף מדפסת: + ← IP ← פרוטוקול (AirPrint, IPP, LPD, HP JetDirect) ← Use.",
+   "ממשק ב-http://localhost:631 (אחרי cupsctl WebInterface=yes).",
+   "מדפסת ארגונית: להתקין דרייבר רשמי של היצרן ולא \"Generic PostScript\"."
+  ],
+  "ifNotWorking": "מדפסת Offline: ping, 9100/631, ושה-Mac באותה רשת. אחרי החלפת IP: למחוק ולהוסיף מחדש.",
+  "notes": "פקודות לפי macOS 14-15 (Sonoma/Sequoia); בגרסאות אחרות חלק מהשמות והנתיבים משתנים. פקודות עם sudo מבקשות סיסמת מנהל. בטרמינל של ה-Mac (Terminal).",
+  "tags": [
+   "printer",
+   "מדפסת",
+   "cups",
+   "lpstat",
+   "print queue",
+   "airprint",
+   "mac",
+   "macos",
+   "apple"
+  ],
+  "createdAt": 1760600000000,
+  "updatedAt": 1760600000000
+ },
+ {
+  "id": "mac-bluetooth-audio",
+  "titleHe": "macOS Bluetooth ושמע: איפוס רכיבים",
+  "titleEn": "macOS Bluetooth and audio reset",
+  "category": "macOS",
+  "symptom": "אוזניות לא מתחברות, אין קול, מיקרופון לא עובד, עכבר Bluetooth מתנתק.",
+  "commands": [
+   {
+    "label": "הפעלה מחדש של Bluetooth",
+    "text": "sudo pkill bluetoothd"
+   },
+   {
+    "label": "הפעלה מחדש של שמע",
+    "text": "sudo killall coreaudiod"
+   },
+   {
+    "label": "התקני Bluetooth",
+    "text": "system_profiler SPBluetoothDataType"
+   },
+   {
+    "label": "התקני שמע",
+    "text": "system_profiler SPAudioDataType"
+   },
+   {
+    "label": "עוצמת קול",
+    "text": "osascript -e \"output volume of (get volume settings)\""
+   },
+   {
+    "label": "הגדרות קול",
+    "text": "defaults read com.apple.sound.beep.volume"
+   }
+  ],
+  "guiSteps": [
+   "System Settings ← Bluetooth ← קליק על ההתקן ← Forget / Remove, ואז Pair מחדש.",
+   "System Settings ← Sound ← Input/Output: לבחור את ההתקן הנכון.",
+   "Option+קליק על סמל Bluetooth/Sound בשורת התפריטים מציג התקני שמע ופרטים.",
+   "Zoom/Teams: להגדיר מיקרופון בתוך האפליקציה ולבדוק הרשאות מיקרופון."
+  ],
+  "ifNotWorking": "אחרי עדכון macOS ו-Bluetooth שבור: להפעיל מחדש, ואם נשאר, Safe Mode. Intel: איפוס NVRAM.",
+  "notes": "פקודות לפי macOS 14-15 (Sonoma/Sequoia); בגרסאות אחרות חלק מהשמות והנתיבים משתנים. פקודות עם sudo מבקשות סיסמת מנהל. בטרמינל של ה-Mac (Terminal).",
+  "tags": [
+   "bluetooth",
+   "audio",
+   "sound",
+   "coreaudiod",
+   "headphones",
+   "microphone",
+   "שמע",
+   "mac",
+   "macos",
+   "apple"
+  ],
+  "createdAt": 1760600000000,
+  "updatedAt": 1760600000000
+ },
+ {
+  "id": "mac-boot-recovery",
+  "titleHe": "macOS אתחול, Safe Mode, Recovery ואיפוס NVRAM",
+  "titleEn": "macOS boot, Safe Mode, Recovery, NVRAM",
+  "category": "macOS",
+  "symptom": "המק לא עולה, תקוע על לוגו, או צריך להיכנס ל-Recovery/Safe Mode כדי לתקן. צריך לדעת איך כל דגם נכנס.",
+  "commands": [
+   {
+    "label": "מצב אתחול",
+    "text": "nvram -p | head"
+   },
+   {
+    "label": "הפעלה מחדש",
+    "text": "sudo shutdown -r now"
+   }
+  ],
+  "guiSteps": [
+   "Apple Silicon (M1 ומעלה): לכבות, ללחוץ ולהחזיק את כפתור ההפעלה עד \"Loading startup options\" ← Options ← Continue (Recovery).",
+   "Safe Mode ב-Apple Silicon: בתפריט האתחול לבחור את הדיסק, להחזיק Shift ולבחור \"Continue in Safe Mode\".",
+   "Intel: Cmd+R בזמן האתחול = Recovery; Shift = Safe Mode; Option = בחירת דיסק; Cmd+Option+P+R = איפוס NVRAM (20 שניות); D = אבחון חומרה.",
+   "Apple Silicon: אין איפוס NVRAM/SMC ידני. הפעלה מחדש מלאה (כיבוי ל-30 שניות) מתקנת בדרך כלל.",
+   "Recovery מאפשר: Restore from Time Machine, Reinstall macOS, Safari, Disk Utility, Terminal (resetpassword, csrutil).",
+   "Apple Diagnostics: Apple Silicon: להחזיק את ההפעלה ← Cmd+D.",
+   "מסך נעילה (Activation Lock/MDM): צריך את ה-Apple ID או ה-IT."
+  ],
+  "ifNotWorking": "אם לא עולה אחרי עדכון: Safe Mode, ואם לא, Recovery ← Disk Utility ← First Aid, ולבסוף Reinstall macOS (לא מוחק נתונים).",
+  "notes": "פקודות לפי macOS 14-15 (Sonoma/Sequoia); בגרסאות אחרות חלק מהשמות והנתיבים משתנים. פקודות עם sudo מבקשות סיסמת מנהל. בטרמינל של ה-Mac (Terminal).",
+  "tags": [
+   "boot",
+   "recovery",
+   "safe mode",
+   "nvram",
+   "smc",
+   "startup",
+   "אתחול",
+   "apple silicon",
+   "intel",
+   "mac",
+   "macos",
+   "apple"
+  ],
+  "createdAt": 1760600000000,
+  "updatedAt": 1760600000000
+ },
+ {
+  "id": "mac-mdm-profiles",
+  "titleHe": "macOS MDM ופרופילים: מצב רישום ובדיקה (Jamf/Intune)",
+  "titleEn": "macOS MDM and profiles",
+  "category": "macOS",
+  "symptom": "Mac ארגוני: הגדרה לא חלה, אפליקציה לא מותקנת, או צריך לבדוק האם המכשיר רשום ב-MDM.",
+  "commands": [
+   {
+    "label": "פרופילים מותקנים",
+    "text": "sudo profiles list"
+   },
+   {
+    "label": "פרופיל מפורט",
+    "text": "sudo profiles show -type configuration"
+   },
+   {
+    "label": "מצב רישום MDM/DEP",
+    "text": "profiles status -type enrollment"
+   },
+   {
+    "label": "רענון הרישום",
+    "text": "sudo profiles renew -type enrollment"
+   },
+   {
+    "label": "Jamf: דיווח מלא",
+    "text": "sudo jamf recon"
+   },
+   {
+    "label": "Jamf: הרצת מדיניות",
+    "text": "sudo jamf policy"
+   },
+   {
+    "label": "Jamf: מצב",
+    "text": "jamf checkJSSConnection"
+   }
+  ],
+  "guiSteps": [
+   "System Settings ← General ← Device Management (או Profiles): כל הפרופילים ומי שולח אותם.",
+   "פרופיל לא חל: לבדוק Scope ב-MDM, שהמכשיר מחובר לאינטרנט, ו-sudo profiles renew.",
+   "מכשיר Supervised/ADE: אי אפשר להסיר את ה-MDM בעצמך."
+  ],
+  "ifNotWorking": "",
+  "notes": "לא מוחקים פרופיל MDM בעצמם. כל הגדרות האבטחה תלויות בו. פקודות לפי macOS 14-15 (Sonoma/Sequoia); בגרסאות אחרות חלק מהשמות והנתיבים משתנים. פקודות עם sudo מבקשות סיסמת מנהל. בטרמינל של ה-Mac (Terminal).",
+  "tags": [
+   "mdm",
+   "profiles",
+   "jamf",
+   "intune",
+   "kandji",
+   "dep",
+   "ade",
+   "management",
+   "mac",
+   "macos",
+   "apple"
+  ],
+  "createdAt": 1760600000000,
+  "updatedAt": 1760600000000
+ },
+ {
+  "id": "mac-remote-access",
+  "titleHe": "macOS גישה מרחוק: SSH, Screen Sharing ו-RDP לשרת",
+  "titleEn": "macOS remote access: SSH, Screen Sharing, RDP",
+  "category": "macOS",
+  "symptom": "צריך להתחבר ל-Mac מרחוק, או מה-Mac לשרתי Windows.",
+  "commands": [
+   {
+    "label": "הפעלת SSH (Remote Login)",
+    "text": "sudo systemsetup -setremotelogin on"
+   },
+   {
+    "label": "מצב SSH",
+    "text": "sudo systemsetup -getremotelogin"
+   },
+   {
+    "label": "כיבוי SSH",
+    "text": "sudo systemsetup -setremotelogin off"
+   },
+   {
+    "label": "התחברות ל-Mac",
+    "text": "ssh <USER>@<MAC-IP>"
+   },
+   {
+    "label": "Apple Remote Desktop kickstart",
+    "text": "sudo /System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart -activate -configure -access -on -privs -all -restart -agent -menu"
+   },
+   {
+    "label": "כתובת Mac ברשת",
+    "text": "ipconfig getifaddr en0"
+   },
+   {
+    "label": "חיבור SSH לשרת עם מפתח",
+    "text": "ssh -i ~/.ssh/id_ed25519 <USER>@<HOST>"
+   }
+  ],
+  "guiSteps": [
+   "System Settings ← General ← Sharing ← Remote Login (SSH) / Screen Sharing / Remote Management.",
+   "Terminal צריך Full Disk Access כדי להפעיל systemsetup -setremotelogin.",
+   "RDP לשרת Windows: Windows App (בעבר Microsoft Remote Desktop) מה-App Store ← Add PC ← <TS-SERVER> ← Credentials.",
+   "חיבור Screen Sharing ל-Mac אחר: Finder ← Go ← Connect to Server ← vnc://<IP>.",
+   "לא לחשוף SSH/VNC לאינטרנט. רק דרך VPN."
+  ],
+  "ifNotWorking": "SSH נדחה: Remote Login כבוי או המשתמש לא ברשימה (Allow access for). Screen Sharing: לוודא Firewall פתוח.",
+  "notes": "פקודות לפי macOS 14-15 (Sonoma/Sequoia); בגרסאות אחרות חלק מהשמות והנתיבים משתנים. פקודות עם sudo מבקשות סיסמת מנהל. בטרמינל של ה-Mac (Terminal).",
+  "tags": [
+   "ssh",
+   "remote login",
+   "screen sharing",
+   "vnc",
+   "rdp",
+   "windows app",
+   "remote desktop",
+   "systemsetup",
+   "mac",
+   "macos",
+   "apple"
+  ],
+  "createdAt": 1760600000000,
+  "updatedAt": 1760600000000
+ },
+ {
+  "id": "mac-time-sync",
+  "titleHe": "macOS שעה ותאריך: סנכרון NTP",
+  "titleEn": "macOS time sync NTP",
+  "category": "macOS",
+  "symptom": "השעה שגויה: שוברת Kerberos/AD, תעודות HTTPS ו-VPN.",
+  "commands": [
+   {
+    "label": "מצב שעה",
+    "text": "date"
+   },
+   {
+    "label": "שרת NTP",
+    "text": "sudo systemsetup -getnetworktimeserver"
+   },
+   {
+    "label": "סנכרון מיידי",
+    "text": "sudo sntp -sS time.apple.com"
+   },
+   {
+    "label": "קביעת שרת",
+    "text": "sudo systemsetup -setnetworktimeserver <NTP-SERVER>"
+   },
+   {
+    "label": "סנכרון אוטומטי פעיל?",
+    "text": "sudo systemsetup -getusingnetworktime"
+   },
+   {
+    "label": "הפעלת סנכרון",
+    "text": "sudo systemsetup -setusingnetworktime on"
+   }
+  ],
+  "guiSteps": [
+   "System Settings ← General ← Date & Time ← Set time and date automatically ← Source.",
+   "ארגון עם AD: להגדיר מקור זמן ל-DC (למשל <DC>.<domain.local>).",
+   "אזור זמן: Date & Time ← Time zone ← Set automatically based on current location."
+  ],
+  "ifNotWorking": "",
+  "notes": "פער זמן של יותר מ-5 דקות שובר Kerberos. פקודות לפי macOS 14-15 (Sonoma/Sequoia); בגרסאות אחרות חלק מהשמות והנתיבים משתנים. פקודות עם sudo מבקשות סיסמת מנהל. בטרמינל של ה-Mac (Terminal).",
+  "tags": [
+   "time",
+   "ntp",
+   "date",
+   "sntp",
+   "שעה",
+   "sync",
+   "kerberos",
+   "mac",
+   "macos",
+   "apple"
+  ],
+  "createdAt": 1760600000000,
+  "updatedAt": 1760600000000
+ },
+ {
+  "id": "mac-time-machine",
+  "titleHe": "macOS Time Machine: גיבוי, סטטוס ושחזור",
+  "titleEn": "macOS Time Machine backup and restore",
+  "category": "macOS",
+  "symptom": "בדיקת גיבוי, גיבוי תקוע, או שחזור קבצים/מערכת.",
+  "commands": [
+   {
+    "label": "סטטוס",
+    "text": "tmutil status"
+   },
+   {
+    "label": "יעד הגיבוי",
+    "text": "tmutil destinationinfo"
+   },
+   {
+    "label": "גיבוי עכשיו",
+    "text": "tmutil startbackup"
+   },
+   {
+    "label": "עצירה",
+    "text": "tmutil stopbackup"
+   },
+   {
+    "label": "רשימת גיבויים",
+    "text": "tmutil listbackups"
+   },
+   {
+    "label": "גיבוי אחרון",
+    "text": "tmutil latestbackup"
+   },
+   {
+    "label": "החרגת תיקייה",
+    "text": "sudo tmutil addexclusion <PATH>"
+   }
+  ],
+  "guiSteps": [
+   "System Settings ← General ← Time Machine ← Add Backup Disk.",
+   "שחזור קבצים: פתח את התיקייה ← סמל Time Machine ← Enter Time Machine ← בחר גרסה ← Restore.",
+   "שחזור כל המערכת: Recovery ← Restore from Time Machine Backup. או Migration Assistant בעת הגדרת מק חדש.",
+   "ארגון: Time Machine אינו תחליף לגיבוי שרת/ענן. לדעת מה המדיניות."
+  ],
+  "ifNotWorking": "גיבוי נעצר: דיסק מלא או מנותק, לבדוק tmutil status ושאין Local Snapshots ענקיים.",
+  "notes": "פקודות לפי macOS 14-15 (Sonoma/Sequoia); בגרסאות אחרות חלק מהשמות והנתיבים משתנים. פקודות עם sudo מבקשות סיסמת מנהל. בטרמינל של ה-Mac (Terminal).",
+  "tags": [
+   "time machine",
+   "backup",
+   "גיבוי",
+   "tmutil",
+   "restore",
+   "שחזור",
+   "mac",
+   "macos",
+   "apple"
+  ],
+  "createdAt": 1760600000000,
+  "updatedAt": 1760600000000
+ },
+ {
+  "id": "mac-battery-hardware",
+  "titleHe": "macOS סוללה וחומרה: מצב סוללה, חשמל, חום",
+  "titleEn": "macOS battery and hardware health",
+  "category": "macOS",
+  "symptom": "סוללה מתרוקנת מהר, נראית נפוחה, המק מתכבה, או צריך להחליט האם להחליף.",
+  "commands": [
+   {
+    "label": "מצב סוללה",
+    "text": "pmset -g batt"
+   },
+   {
+    "label": "מחזורים ובריאות",
+    "text": "system_profiler SPPowerDataType | grep -E \"Cycle Count|Condition|Maximum Capacity\""
+   },
+   {
+    "label": "מי מונע שינה",
+    "text": "pmset -g assertions"
+   },
+   {
+    "label": "יומן החשמל (בדיקת התעוררויות)",
+    "text": "pmset -g log | tail -30"
+   },
+   {
+    "label": "הגדרות חשמל",
+    "text": "pmset -g"
+   },
+   {
+    "label": "מניעת שינה ל-60 דקות",
+    "text": "caffeinate -t 3600"
+   },
+   {
+    "label": "טמפרטורת/מאוורר (Apple Silicon: דורש sudo)",
+    "text": "sudo powermetrics --samplers smc -i 1000 -n 1"
+   }
+  ],
+  "guiSteps": [
+   "System Settings ← Battery ← Battery Health: Maximum Capacity ו-Condition.",
+   "מתחת ל-80% קיבולת או Service Recommended: להחליף סוללה.",
+   "סוללה נפוחה (משטח עקום/טראקפד עולה): להפסיק להשתמש ולהעביר לשירות.",
+   "Apple Diagnostics: ראה \"אתחול, Safe Mode ו-Recovery\".",
+   "טעינה לא עובדת: כבל/מתאם מקור, ניקוי יציאה, ובדיקה במתאם אחר."
+  ],
+  "ifNotWorking": "",
+  "notes": "פקודות לפי macOS 14-15 (Sonoma/Sequoia); בגרסאות אחרות חלק מהשמות והנתיבים משתנים. פקודות עם sudo מבקשות סיסמת מנהל. בטרמינל של ה-Mac (Terminal).",
+  "tags": [
+   "battery",
+   "סוללה",
+   "pmset",
+   "power",
+   "cycle count",
+   "sleep",
+   "hardware",
+   "mac",
+   "macos",
+   "apple"
+  ],
+  "createdAt": 1760600000000,
+  "updatedAt": 1760600000000
+ },
+ {
+  "id": "mac-outlook-office",
+  "titleHe": "macOS Outlook ו-Microsoft 365: כניסה ובעיות נפוצות",
+  "titleEn": "macOS Outlook / M365 login issues",
+  "category": "macOS",
+  "symptom": "Outlook for Mac מבקש כניסה שוב ושוב, לא מסנכרן, או קורס. לרוב בעיית Keychain, אימות או פרופיל.",
+  "commands": [
+   {
+    "label": "רשומות Microsoft ב-Keychain (לצפייה)",
+    "text": "security dump-keychain 2>/dev/null | grep -i \"microsoft\" | head"
+   },
+   {
+    "label": "אפליקציות Office מותקנות",
+    "text": "ls /Applications | grep -i \"Microsoft\""
+   },
+   {
+    "label": "Autodiscover של הדומיין",
+    "text": "dig +short CNAME autodiscover.<DOMAIN>"
+   },
+   {
+    "label": "בדיקת הגעה ל-M365",
+    "text": "curl -I https://outlook.office365.com"
+   }
+  ],
+  "guiSteps": [
+   "להתנתק מ-Office ולהתחבר מחדש: Outlook ← Settings ← Accounts ← Remove ← Add Account.",
+   "Keychain Access: למחוק רשומות Microsoft Office Identities, com.microsoft.adalcache, MicrosoftOffice* ולהתחבר מחדש.",
+   "ב-Mac מנוהל עם SSO/Entra: Company Portal מוודא שהמכשיר Compliant. Platform SSO: ראה \"AD, Kerberos ו-SSO\".",
+   "Outlook איטי או תקוע בסנכרון: Outlook ← Help ← Repair Database (או Outlook Profile Manager) והפעלה מחדש.",
+   "Office נתקע בעדכון: Help ← Check for Updates (Microsoft AutoUpdate).",
+   "בעיות MFA: לבדוק זמן המכשיר ואפליקציית Authenticator."
+  ],
+  "ifNotWorking": "אם נשאר: ליצור פרופיל חדש, או להתקין מחדש (גיבוי Archive לפני כן).",
+  "notes": "פקודות לפי macOS 14-15 (Sonoma/Sequoia); בגרסאות אחרות חלק מהשמות והנתיבים משתנים. פקודות עם sudo מבקשות סיסמת מנהל. בטרמינל של ה-Mac (Terminal).",
+  "tags": [
+   "outlook",
+   "office",
+   "m365",
+   "microsoft 365",
+   "exchange",
+   "entra",
+   "sso",
+   "keychain",
+   "mac",
+   "macos",
+   "apple"
+  ],
+  "createdAt": 1760600000000,
+  "updatedAt": 1760600000000
+ },
+ {
+  "id": "mac-terminal-toolkit",
+  "titleHe": "macOS פקודות Terminal שימושיות ל-Help Desk",
+  "titleEn": "macOS terminal toolkit for help desk",
+  "category": "macOS",
+  "symptom": "כלים יומיומיים שחוסכים לחיצות: Finder, קבצים מוסתרים, הגדרות מערכת, הפעלת אפליקציות, העתקה ללוח.",
+  "commands": [
+   {
+    "label": "להציג קבצים מוסתרים ב-Finder",
+    "text": "defaults write com.apple.finder AppleShowAllFiles -bool true && killall Finder"
+   },
+   {
+    "label": "להסתיר שוב",
+    "text": "defaults write com.apple.finder AppleShowAllFiles -bool false && killall Finder"
+   },
+   {
+    "label": "פתיחת התיקייה הנוכחית ב-Finder",
+    "text": "open ."
+   },
+   {
+    "label": "פתיחת אפליקציה",
+    "text": "open -a \"Safari\""
+   },
+   {
+    "label": "פתיחת הגדרות",
+    "text": "open \"x-apple.systempreferences:com.apple.Network-Settings.extension\""
+   },
+   {
+    "label": "העתקה ללוח",
+    "text": "echo \"text\" | pbcopy"
+   },
+   {
+    "label": "הדבקה מהלוח",
+    "text": "pbpaste"
+   },
+   {
+    "label": "קובץ בשולחן העבודה לשיתוף מהיר",
+    "text": "zip -r ~/Desktop/logs.zip ~/Library/Logs/DiagnosticReports"
+   },
+   {
+    "label": "מניעת שינה בזמן פקודה",
+    "text": "caffeinate -i <COMMAND>"
+   },
+   {
+    "label": "מי אני, איזה משתמש",
+    "text": "whoami; id"
+   },
+   {
+    "label": "מצב SIP",
+    "text": "csrutil status"
+   },
+   {
+    "label": "צילום מסך מהטרמינל",
+    "text": "screencapture -x ~/Desktop/shot.png"
+   },
+   {
+    "label": "מתי נטען האתחול האחרון",
+    "text": "sysctl -n kern.boottime"
+   },
+   {
+    "label": "הפעלה מחדש / כיבוי",
+    "text": "sudo shutdown -r now"
+   },
+   {
+    "label": "חיפוש טקסט בקבצים",
+    "text": "grep -ri \"<TEXT>\" <FOLDER>"
+   },
+   {
+    "label": "צפייה בקובץ plist",
+    "text": "plutil -p ~/Library/Preferences/<FILE>.plist"
+   }
+  ],
+  "guiSteps": [
+   "Cmd+Shift+. מציג/מסתיר קבצים מוסתרים ב-Finder בלי טרמינל.",
+   "Finder ← Go ← Go to Folder (Cmd+Shift+G) ← ~/Library.",
+   "Spotlight (Cmd+Space) ← Terminal."
+  ],
+  "ifNotWorking": "",
+  "notes": "פקודות לפי macOS 14-15 (Sonoma/Sequoia); בגרסאות אחרות חלק מהשמות והנתיבים משתנים. פקודות עם sudo מבקשות סיסמת מנהל. בטרמינל של ה-Mac (Terminal).",
+  "tags": [
+   "terminal",
+   "cli",
+   "defaults",
+   "open",
+   "pbcopy",
+   "csrutil",
+   "caffeinate",
+   "tools",
+   "mac",
+   "macos",
+   "apple"
+  ],
+  "createdAt": 1760600000000,
+  "updatedAt": 1760600000000
+ },
+ {
+  "id": "mac-shortcuts",
+  "titleHe": "macOS קיצורי מקלדת חשובים",
+  "titleEn": "macOS essential keyboard shortcuts",
+  "category": "macOS",
+  "symptom": "קיצורים שחוסכים זמן בעבודה מול משתמשים ובפתרון תקלות. Cmd = ⌘, Option = ⌥.",
+  "commands": [],
+  "guiSteps": [
+   "Cmd+Space: Spotlight. Cmd+Tab: החלפת אפליקציה. Cmd+`: החלפת חלון באותה אפליקציה.",
+   "Cmd+Option+Esc: Force Quit. Cmd+Q: יציאה מאפליקציה. Cmd+W: סגירת חלון. Cmd+H: הסתרה.",
+   "Cmd+Shift+3: צילום מסך מלא. Cmd+Shift+4: אזור. Cmd+Shift+5: תפריט צילום והקלטה.",
+   "Cmd+Shift+G: Go to Folder. Cmd+Shift+. : קבצים מוסתרים. Cmd+K: Connect to Server.",
+   "Cmd+Delete: העברה לפח. Cmd+Shift+Delete: ריקון פח. Cmd+I: Get Info. Cmd+D: שכפול.",
+   "Cmd+C / V / X: העתק, הדבק, גזור. Option+Cmd+V: הדבקה כהעברה (Move).",
+   "Ctrl+Cmd+Q: נעילת מסך. Cmd+Shift+Q: Log Out. Ctrl+Option+Cmd+Power: כיבוי.",
+   "Cmd+, : הגדרות האפליקציה. Cmd+Z / Shift+Cmd+Z: Undo / Redo. Cmd+F: חיפוש.",
+   "Cmd+Ctrl+Space: Emoji ותווים. Option+Shift+K: סמל Apple.",
+   "Cmd+Option+D: הסתרה/הצגת Dock. Ctrl+Up: Mission Control. Ctrl+Left/Right: החלפת Desktop.",
+   "Fn+E או Ctrl+Cmd+Space: אימוג׳י. Fn+F: מסך מלא (בחלק מהדגמים).",
+   "Option+קליק על סמל Wi-Fi/Bluetooth/Sound: מידע מורחב.",
+   "בעת אתחול: ראה \"אתחול, Safe Mode ו-Recovery\"."
+  ],
+  "ifNotWorking": "",
+  "notes": "פקודות לפי macOS 14-15 (Sonoma/Sequoia); בגרסאות אחרות חלק מהשמות והנתיבים משתנים. פקודות עם sudo מבקשות סיסמת מנהל. בטרמינל של ה-Mac (Terminal).",
+  "tags": [
+   "shortcuts",
+   "קיצורים",
+   "keyboard",
+   "cmd",
+   "force quit",
+   "screenshot",
+   "mac",
+   "macos",
+   "apple"
+  ],
+  "createdAt": 1760600000000,
+  "updatedAt": 1760600000000
+ },
+ {
+  "id": "mac-vs-windows-cheatsheet",
+  "titleHe": "macOS מול Windows: טבלת המרה לפקודות Help Desk",
+  "titleEn": "macOS vs Windows command mapping",
+  "category": "macOS",
+  "symptom": "מומחה Windows שעובר ל-Mac: איזו פקודה בטרמינל עונה על איזו פקודה מוכרת.",
+  "commands": [
+   {
+    "label": "ipconfig ← ",
+    "text": "ipconfig getifaddr en0   # או ifconfig"
+   },
+   {
+    "label": "ipconfig /all ← ",
+    "text": "networksetup -getinfo \"Wi-Fi\"; scutil --dns"
+   },
+   {
+    "label": "ipconfig /flushdns ← ",
+    "text": "sudo dscacheutil -flushcache; sudo killall -HUP mDNSResponder"
+   },
+   {
+    "label": "ipconfig /renew ← ",
+    "text": "sudo ipconfig set en0 DHCP"
+   },
+   {
+    "label": "tracert ← ",
+    "text": "traceroute <HOST>"
+   },
+   {
+    "label": "nslookup ← ",
+    "text": "nslookup / dig"
+   },
+   {
+    "label": "Test-NetConnection -Port ← ",
+    "text": "nc -vz <HOST> <PORT>"
+   },
+   {
+    "label": "netstat -ano ← ",
+    "text": "lsof -i -n -P"
+   },
+   {
+    "label": "tasklist / taskkill ← ",
+    "text": "ps aux / killall <APP> (או kill -9 <PID>)"
+   },
+   {
+    "label": "systeminfo ← ",
+    "text": "system_profiler SPHardwareDataType; sw_vers"
+   },
+   {
+    "label": "whoami /groups ← ",
+    "text": "id"
+   },
+   {
+    "label": "gpresult ← ",
+    "text": "sudo profiles show -type configuration"
+   },
+   {
+    "label": "sfc /scannow ← ",
+    "text": "diskutil verifyVolume /"
+   },
+   {
+    "label": "chkdsk ← ",
+    "text": "diskutil repairVolume /"
+   },
+   {
+    "label": "Event Viewer ← ",
+    "text": "Console.app / log show"
+   },
+   {
+    "label": "Task Manager ← ",
+    "text": "Activity Monitor / top"
+   },
+   {
+    "label": "Services.msc ← ",
+    "text": "launchctl list; sudo launchctl kickstart -k system/<LABEL>"
+   },
+   {
+    "label": "Get-HotFix ← ",
+    "text": "softwareupdate --history"
+   },
+   {
+    "label": "net use ← ",
+    "text": "mount_smbfs / open smb://"
+   },
+   {
+    "label": "shutdown /r ← ",
+    "text": "sudo shutdown -r now"
+   },
+   {
+    "label": "Regedit ← ",
+    "text": "defaults read/write; plutil -p (קבצי plist)"
+   },
+   {
+    "label": "BitLocker ← ",
+    "text": "fdesetup status (FileVault)"
+   },
+   {
+    "label": "Defender ← ",
+    "text": "XProtect + Gatekeeper (מובנה): spctl --status"
+   }
+  ],
+  "guiSteps": [
+   "הכלל: ב-Mac ההגדרות נשמרות בקובצי plist (בקבוצות ~/Library/Preferences ו-/Library/Preferences), ולא ברגיסטרי.",
+   "לא קיים \"Run as Administrator\": ב-Mac משתמשים ב-sudo (מבקש סיסמת מנהל).",
+   "Windows+R ← Cmd+Space; Win+E (Explorer) ← Cmd+N (Finder); Alt+Tab ← Cmd+Tab; Ctrl+Alt+Del ← Cmd+Option+Esc."
+  ],
+  "ifNotWorking": "",
+  "notes": "פקודות לפי macOS 14-15 (Sonoma/Sequoia); בגרסאות אחרות חלק מהשמות והנתיבים משתנים. פקודות עם sudo מבקשות סיסמת מנהל. בטרמינל של ה-Mac (Terminal).",
+  "tags": [
+   "windows",
+   "mapping",
+   "המרה",
+   "cheatsheet",
+   "ipconfig",
+   "taskkill",
+   "comparison",
+   "mac",
+   "macos",
+   "apple"
   ],
   "createdAt": 1760600000000,
   "updatedAt": 1760600000000
